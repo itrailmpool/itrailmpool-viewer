@@ -134,18 +134,22 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
     public WorkerHashRateEntity getWorkerHashRate(String poolId, String workerName) {
         try {
             return jdbcTemplate.queryForObject("""
-                            SELECT (SELECT avg(hashrate) FROM minerstats WHERE worker = ms.worker AND created >= NOW() - interval '90 seconds') AS current_hashrate,
-                                   (SELECT avg(hashrate) FROM minerstats WHERE worker = ms.worker AND created >= NOW() - interval '1 hour') AS average_hashrate_hour,
-                                   (SELECT avg(hashrate) FROM minerstats WHERE worker = ms.worker AND created >= NOW() - interval '1 day') AS average_hashrate_day
-                            FROM minerstats ms
-                            WHERE poolid = ?
-                                AND ms.created >= NOW() - interval '1 day'
-                                AND ms.worker IN (
-                                  SELECT s.worker || '.' || s.device
-                                  FROM shares_statistic s
-                                  WHERE s.worker = ?
-                              )
-                            GROUP BY ms.worker""",
+                            SELECT sum(current_hashrate)      AS current_hashrate,
+                                   sum(average_hashrate_hour) AS average_hashrate_hour,
+                                   sum(average_hashrate_day)  AS average_hashrate_day
+                            FROM
+                                (SELECT (SELECT avg(hashrate) FROM minerstats WHERE worker = ms.worker AND created >= NOW() - interval '90 seconds') AS current_hashrate,
+                                        (SELECT avg(hashrate) FROM minerstats WHERE worker = ms.worker AND created >= NOW() - interval '1 hour')     AS average_hashrate_hour,
+                                        (SELECT avg(hashrate) FROM minerstats WHERE worker = ms.worker AND created >= NOW() - interval '1 day')      AS average_hashrate_day
+                                    FROM minerstats ms
+                                    WHERE poolid = ?
+                                      AND ms.created >= NOW() - interval '1 day'
+                                  AND ms.worker IN (
+                                        SELECT s.worker || '.' || s.device
+                                        FROM shares_statistic s
+                                        WHERE s.worker = ?
+                                )
+                                GROUP BY ms.worker) as subquery;""",
                     WORKER_HASH_RATE_ROW_MAPPER,
                     poolId,
                     workerName);
