@@ -5,9 +5,12 @@ import com.zaxxer.hikari.HikariDataSource;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
-import org.springframework.context.annotation.*;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.context.annotation.Primary;
+import org.springframework.context.annotation.PropertySource;
+import org.springframework.context.annotation.PropertySources;
 import org.springframework.data.jdbc.repository.config.AbstractJdbcConfiguration;
-
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcOperations;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -49,7 +52,7 @@ public class PostgresConfig extends AbstractJdbcConfiguration {
         config.setDriverClassName("org.postgresql.Driver");
         config.setMaximumPoolSize(poolMaxSize);
         config.setMinimumIdle(poolMinIdle);
-        config.setLeakDetectionThreshold(10* 60 * 1000);
+        config.setLeakDetectionThreshold(10 * 60 * 1000);
 
         return new HikariDataSource(config);
     }
@@ -67,7 +70,7 @@ public class PostgresConfig extends AbstractJdbcConfiguration {
         return template;
     }
 
-    @Bean(name="transactionManager")
+    @Bean(name = "transactionManager")
     public PlatformTransactionManager txManager(HikariDataSource dataSource) {
         return new DataSourceTransactionManager(dataSource);
     }

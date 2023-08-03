@@ -9,6 +9,7 @@ import java.util.List;
 @Accessors(chain = true)
 public class WorkerStatisticResponse {
 
+    private WorkerHashRate workerHashRate;
     private List<WorkerStatistic> workerStatistics;
     private WorkerDevicesStatistic workerDevicesStatistic;
 }

@@ -6,6 +6,7 @@ import java.util.List;
 
 @Data
 public class TcpProxyProtocolConfig {
+
     /**
      * Enable for client IP addresses to be detected when using a load balancer with TCP proxy protocol enabled, such as HAProxy.
      */

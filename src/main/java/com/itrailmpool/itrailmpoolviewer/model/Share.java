@@ -20,5 +20,4 @@ public class Share {
     private Instant created;
     private Boolean isValid;
     private String device;
-
 }

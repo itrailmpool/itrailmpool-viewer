@@ -6,7 +6,8 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 @Data
-public class MinerSettings {
+public class MinerSettingsEntity {
+
     private String poolId;
     private String address;
     private BigDecimal paymentThreshold;

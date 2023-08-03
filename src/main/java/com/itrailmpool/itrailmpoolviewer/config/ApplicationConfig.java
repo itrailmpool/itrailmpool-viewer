@@ -13,6 +13,9 @@ import org.springframework.web.client.RestTemplate;
 @Configuration
 public class ApplicationConfig {
 
+    public static final String DEFAULT_DATA_FORMAT_PATTERN = "yyyy-MM-dd'T'HH:mm:ss'Z'";
+    public static final String UTC_TIMEZONE = "UTC";
+
     @Bean
     public RestTemplate restTemplate(RestTemplateBuilder builder) {
         return builder.build();

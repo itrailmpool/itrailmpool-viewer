@@ -1,6 +1,6 @@
 package com.itrailmpool.itrailmpoolviewer.dal.repository;
 
-import com.itrailmpool.itrailmpoolviewer.dal.entity.ShareStatistic;
+import com.itrailmpool.itrailmpoolviewer.dal.entity.ShareStatisticEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -11,20 +11,13 @@ import org.springframework.stereotype.Repository;
 @RequiredArgsConstructor
 public class ShareStatisticRepositoryImpl implements ShareStatisticRepository {
 
-    private static final RowMapper<ShareStatistic> ROW_MAPPER = getRowMapper();
+    private static final RowMapper<ShareStatisticEntity> SHARE_STATISTIC_ROW_MAPPER = getShareStatisticRowMapper();
 
     private final JdbcTemplate jdbcTemplate;
 
-    public Integer getActiveWorkersCount(String poolId) {
-        return jdbcTemplate.queryForObject(
-                "SELECT COUNT(DISTINCT s.worker) FROM shares s WHERE s.poolid = ? AND created >= NOW() - INTERVAL '90 seconds'",
-                Integer.class,
-                poolId);
-    }
-
-    private static RowMapper<ShareStatistic> getRowMapper(){
+    private static RowMapper<ShareStatisticEntity> getShareStatisticRowMapper() {
         return (resultSet, i) -> {
-            ShareStatistic shareStatistic = new ShareStatistic();
+            ShareStatisticEntity shareStatistic = new ShareStatisticEntity();
 
             shareStatistic.setPoolId(resultSet.getString("poolid"));
             shareStatistic.setBlockHeight(resultSet.getLong("blockheight"));

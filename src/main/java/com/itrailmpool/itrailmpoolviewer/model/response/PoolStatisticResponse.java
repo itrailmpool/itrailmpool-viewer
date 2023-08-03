@@ -6,5 +6,6 @@ import java.util.List;
 
 @Data
 public class PoolStatisticResponse {
+
     private List<AggregatedPoolStats> stats;
 }

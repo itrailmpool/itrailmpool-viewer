@@ -6,7 +6,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 
 @Data
-public class ShareStatistic {
+public class ShareStatisticEntity {
 
     private String poolId;
     private Long blockHeight;
@@ -20,5 +20,4 @@ public class ShareStatistic {
     private Instant created;
     private Boolean isValid;
     private String device;
-
 }

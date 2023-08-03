@@ -6,6 +6,7 @@ import java.math.BigDecimal;
 
 @Data
 public class PoolEndpoint {
+
     private String listenAddress;
     private String name;
     private BigDecimal difficulty;

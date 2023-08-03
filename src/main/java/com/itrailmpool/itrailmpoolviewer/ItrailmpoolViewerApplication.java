@@ -8,15 +8,15 @@ import org.springframework.boot.autoconfigure.SpringBootApplication;
 @SpringBootApplication
 public class ItrailmpoolViewerApplication {
 
-	private static final Logger LOGGER = LoggerFactory.getLogger(ItrailmpoolViewerApplication.class);
+    private static final Logger LOGGER = LoggerFactory.getLogger(ItrailmpoolViewerApplication.class);
 
-	public static void main(String[] args) {
-		try{
-			SpringApplication.run(ItrailmpoolViewerApplication.class, args);
+    public static void main(String[] args) {
+        try {
+            SpringApplication.run(ItrailmpoolViewerApplication.class, args);
 
-			LOGGER.debug("Itrailmpool Viewer started");
-		} catch (Exception e) {
-			LOGGER.error("Unhandled exception", e);
-		}
-	}
+            LOGGER.debug("Itrailmpool Viewer started");
+        } catch (Exception e) {
+            LOGGER.error("Unhandled exception", e);
+        }
+    }
 }

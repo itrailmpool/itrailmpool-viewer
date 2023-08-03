@@ -1,6 +1,6 @@
 package com.itrailmpool.itrailmpoolviewer.dal.repository;
 
-import com.itrailmpool.itrailmpoolviewer.dal.entity.MinerSettings;
+import com.itrailmpool.itrailmpoolviewer.dal.entity.MinerSettingsEntity;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -11,27 +11,26 @@ import org.springframework.stereotype.Repository;
 
 @Repository
 @RequiredArgsConstructor
-public class MinerSettingsRepositoryImpl implements MinerSettingsRepository{
+public class MinerSettingsRepositoryImpl implements MinerSettingsRepository {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(MinerSettingsRepositoryImpl.class);
-    private static final RowMapper<MinerSettings> ROW_MAPPER = getRowMapper();
+    private static final RowMapper<MinerSettingsEntity> MINER_SETTINGS_ROW_MAPPER = getMinerSettingsRowMapper();
 
     private final JdbcTemplate jdbcTemplate;
 
-    public MinerSettings findByPoolIdAndWorkerName(String poolId, String workerName) {
+    public MinerSettingsEntity findByPoolIdAndWorkerName(String poolId, String workerName) {
         try {
-            return jdbcTemplate.queryForObject("SELECT * FROM miner_settings s WHERE s.poolid = ? AND s.workername = ?", ROW_MAPPER, poolId, workerName);
-        }
-        catch (EmptyResultDataAccessException e) {
+            return jdbcTemplate.queryForObject("SELECT * FROM miner_settings s WHERE s.poolid = ? AND s.workername = ?", MINER_SETTINGS_ROW_MAPPER, poolId, workerName);
+        } catch (EmptyResultDataAccessException e) {
             LOGGER.debug("MinerSettings for poolId {} and workerName {} not found", poolId, workerName);
         }
         return null;
     }
 
 
-    private static RowMapper<MinerSettings> getRowMapper(){
+    private static RowMapper<MinerSettingsEntity> getMinerSettingsRowMapper() {
         return (resultSet, i) -> {
-            MinerSettings minerSettings = new MinerSettings();
+            MinerSettingsEntity minerSettings = new MinerSettingsEntity();
 
             minerSettings.setPoolId(resultSet.getString("poolid"));
             minerSettings.setAddress(resultSet.getString("address"));

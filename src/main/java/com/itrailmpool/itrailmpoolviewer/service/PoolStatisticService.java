@@ -1,9 +1,15 @@
 package com.itrailmpool.itrailmpoolviewer.service;
 
 import com.itrailmpool.itrailmpoolviewer.client.MiningcoreClient;
-import com.itrailmpool.itrailmpoolviewer.dal.entity.MinerSettings;
+import com.itrailmpool.itrailmpoolviewer.dal.entity.DeviceStatisticEntity;
+import com.itrailmpool.itrailmpoolviewer.dal.entity.MinerSettingsEntity;
+import com.itrailmpool.itrailmpoolviewer.dal.entity.WorkerHashRateEntity;
+import com.itrailmpool.itrailmpoolviewer.dal.entity.WorkerStatisticEntity;
+import com.itrailmpool.itrailmpoolviewer.dal.repository.DeviceStatisticRepository;
 import com.itrailmpool.itrailmpoolviewer.dal.repository.MinerSettingsRepository;
-import com.itrailmpool.itrailmpoolviewer.dal.repository.ShareStatisticRepository;
+import com.itrailmpool.itrailmpoolviewer.dal.repository.WorkerStatisticRepository;
+import com.itrailmpool.itrailmpoolviewer.mapper.DeviceStatisticMapper;
+import com.itrailmpool.itrailmpoolviewer.mapper.WorkerStatisticMapper;
 import com.itrailmpool.itrailmpoolviewer.model.response.Block;
 import com.itrailmpool.itrailmpoolviewer.model.response.MinerPerformanceStats;
 import com.itrailmpool.itrailmpoolviewer.model.response.MinerStatisticResponse;
@@ -18,15 +24,19 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
 import java.util.Collections;
+import java.util.Comparator;
 import java.util.List;
 
 @Service
 @RequiredArgsConstructor
-public class PoolService {
+public class PoolStatisticService {
 
     private final MiningcoreClient miningcoreClient;
-    private final ShareStatisticRepository shareStatisticRepository;
+    private final DeviceStatisticRepository deviceStatisticRepository;
     private final MinerSettingsRepository minerSettingsRepository;
+    private final WorkerStatisticRepository workerStatisticRepository;
+    private final WorkerStatisticMapper workerStatisticMapper;
+    private final DeviceStatisticMapper deviceStatisticMapper;
 
     public PoolResponse getPools() {
         var pools = miningcoreClient.getPools();
@@ -60,24 +70,34 @@ public class PoolService {
     }
 
     private void updateConnectedMiners(PoolInfo pool) {
-        Integer activeWorkersCount = shareStatisticRepository.getActiveWorkersCount(pool.getId());
+        Integer activeWorkersCount = deviceStatisticRepository.getActiveWorkersCount(pool.getId());
         pool.getPoolStats().setConnectedMiners(activeWorkersCount);
     }
 
     public WorkerStatisticResponse getWorkerStatistic(String poolId, String workerName) {
-        //todo: implement
+        List<DeviceStatisticEntity> devicesStatistic = deviceStatisticRepository.getWorkerDevicesStatistic(poolId, workerName);
+        WorkerHashRateEntity workerHashRateEntity = workerStatisticRepository.getWorkerHashRate(poolId, workerName);
+        List<WorkerStatisticEntity> workerStatistic = workerStatisticRepository.getWorkerStatistic(poolId, workerName).stream()
+                .sorted(Comparator.comparing(WorkerStatisticEntity::getDate).reversed())
+                .toList();
+
+        long totalDevicesCount = devicesStatistic.size();
+        long devicesOnline = devicesStatistic.stream().filter(DeviceStatisticEntity::getIsOnline).count();
+        long devicesOffline = totalDevicesCount - devicesOnline;
+
         return new WorkerStatisticResponse()
-                .setWorkerStatistics(Collections.emptyList())
+                .setWorkerHashRate(workerStatisticMapper.toWorkerHashRateDto(workerHashRateEntity))
+                .setWorkerStatistics(workerStatisticMapper.toWorkerStatisticDto(workerStatistic))
                 .setWorkerDevicesStatistic(new WorkerDevicesStatistic()
-                .setTotalDevices(0)
-                .setWorkerName("")
-                .setDevicesOffline(0)
-                .setDevicesOnline(0)
-                .setWorkerDevicesStatistic(Collections.emptyList()));
+                        .setWorkerName(workerName)
+                        .setTotalDevices(totalDevicesCount)
+                        .setDevicesOnline(devicesOnline)
+                        .setDevicesOffline(devicesOffline)
+                        .setWorkerDevicesStatistic(deviceStatisticMapper.toDeviceStatistic(devicesStatistic)));
     }
 
     public List<WorkerPerformanceStatsContainer> getWorkerPerformance(String poolId, String workerName) {
-        MinerSettings minerSettings = minerSettingsRepository.findByPoolIdAndWorkerName(poolId, workerName);
+        MinerSettingsEntity minerSettings = minerSettingsRepository.findByPoolIdAndWorkerName(poolId, workerName);
         if (minerSettings == null) {
             return Collections.emptyList();
         }

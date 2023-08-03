@@ -10,8 +10,8 @@ import java.util.List;
 public class WorkerDevicesStatistic {
 
     private String workerName;
-    private Integer totalDevices;
-    private Integer devicesOnline;
-    private Integer devicesOffline;
+    private Long totalDevices;
+    private Long devicesOnline;
+    private Long devicesOffline;
     private List<DeviceStatistic> workerDevicesStatistic;
 }

@@ -1,8 +1,8 @@
 package com.itrailmpool.itrailmpoolviewer.dal.repository;
 
-import com.itrailmpool.itrailmpoolviewer.dal.entity.MinerSettings;
+import com.itrailmpool.itrailmpoolviewer.dal.entity.MinerSettingsEntity;
 
 public interface MinerSettingsRepository {
 
-    MinerSettings findByPoolIdAndWorkerName(String poolId, String workerName);
+    MinerSettingsEntity findByPoolIdAndWorkerName(String poolId, String workerName);
 }

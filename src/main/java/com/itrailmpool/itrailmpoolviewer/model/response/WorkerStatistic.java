@@ -1,23 +1,26 @@
 package com.itrailmpool.itrailmpoolviewer.model.response;
 
+import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;
 import lombok.experimental.Accessors;
-import com.fasterxml.jackson.annotation.JsonFormat;
-
 
 import java.math.BigDecimal;
+import java.math.BigInteger;
 import java.time.Instant;
+
+import static com.itrailmpool.itrailmpoolviewer.config.ApplicationConfig.DEFAULT_DATA_FORMAT_PATTERN;
+import static com.itrailmpool.itrailmpoolviewer.config.ApplicationConfig.UTC_TIMEZONE;
 
 @Data
 @Accessors(chain = true)
 public class WorkerStatistic {
 
     private String workerName;
-    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = "yyyy-MM-dd'T'HH:mm:ss'Z'", timezone = "UTC")
+    @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DEFAULT_DATA_FORMAT_PATTERN, timezone = UTC_TIMEZONE)
     private Instant date;
-
-    private BigDecimal averageHashrate;
-    private Integer acceptedShares;
-    private Integer unacceptedShares;
+    private BigDecimal averageHashRate;
+    private BigDecimal averageSharesPerSecond;
+    private BigInteger totalAcceptedShares;
+    private BigInteger totalRejectedShares;
     private BigDecimal totalPayment;
 }
