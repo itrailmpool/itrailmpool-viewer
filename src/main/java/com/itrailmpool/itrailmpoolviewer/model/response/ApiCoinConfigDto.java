@@ -3,7 +3,7 @@ package com.itrailmpool.itrailmpoolviewer.model.response;
 import lombok.Data;
 
 @Data
-public class ApiCoinConfig {
+public class ApiCoinConfigDto {
 
     private String type;
     private String name;

@@ -1,7 +1,7 @@
 package com.itrailmpool.itrailmpoolviewer.client;
 
+import com.itrailmpool.itrailmpoolviewer.client.model.PoolResponse;
 import com.itrailmpool.itrailmpoolviewer.model.response.*;
-import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
@@ -108,21 +108,21 @@ public class MiningcoreClient {
         }
     }
 
-    public List<MinerPerformanceStats> getMiners(String poolId, int page, int size) {
+    public List<MinerPerformanceStatsDto> getMiners(String poolId, int page, int size) {
         UriComponentsBuilder builder = UriComponentsBuilder
                 .fromHttpUrl(primaryUrl)
                 .pathSegment("pools", poolId, "miners")
                 .queryParam("page", page)
                 .queryParam("pageSize", size);
         try {
-            ResponseEntity<List<MinerPerformanceStats>> response =
+            ResponseEntity<List<MinerPerformanceStatsDto>> response =
                     restTemplate.exchange(builder.toUriString(), HttpMethod.GET, null, new ParameterizedTypeReference<>() {
                     });
 
             return response.getBody();
         } catch (RestClientException e) {
             builder.replacePath(secondaryUrl + "pools/" + poolId + "/miners");
-            ResponseEntity<List<MinerPerformanceStats>> response =
+            ResponseEntity<List<MinerPerformanceStatsDto>> response =
                     restTemplate.exchange(builder.toUriString(), HttpMethod.GET, null, new ParameterizedTypeReference<>() {
                     });
 

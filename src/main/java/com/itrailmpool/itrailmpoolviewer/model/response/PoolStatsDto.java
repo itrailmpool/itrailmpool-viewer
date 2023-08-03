@@ -10,7 +10,7 @@ import static com.itrailmpool.itrailmpoolviewer.config.ApplicationConfig.DEFAULT
 import static com.itrailmpool.itrailmpoolviewer.config.ApplicationConfig.UTC_TIMEZONE;
 
 @Data
-public class PoolStats {
+public class PoolStatsDto {
 
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DEFAULT_DATA_FORMAT_PATTERN, timezone = UTC_TIMEZONE)
     private Instant lastPoolBlockTime;

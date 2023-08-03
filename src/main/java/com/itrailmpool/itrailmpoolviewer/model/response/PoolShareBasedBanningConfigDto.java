@@ -5,7 +5,7 @@ import lombok.Data;
 import java.math.BigDecimal;
 
 @Data
-public class PoolShareBasedBanningConfig {
+public class PoolShareBasedBanningConfigDto {
 
     private Boolean enabled;
     private Integer checkThreshold; // Check stats when this many shares have been submitted

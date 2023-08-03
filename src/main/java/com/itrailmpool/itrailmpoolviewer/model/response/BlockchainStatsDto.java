@@ -11,7 +11,7 @@ import static com.itrailmpool.itrailmpoolviewer.config.ApplicationConfig.DEFAULT
 import static com.itrailmpool.itrailmpoolviewer.config.ApplicationConfig.UTC_TIMEZONE;
 
 @Data
-public class BlockchainStats {
+public class BlockchainStatsDto {
 
     private String networkType;
     private BigDecimal networkHashrate;

@@ -1,10 +1,10 @@
 package com.itrailmpool.itrailmpoolviewer.controller;
 
 import com.itrailmpool.itrailmpoolviewer.model.response.Block;
-import com.itrailmpool.itrailmpoolviewer.model.response.MinerPerformanceStats;
+import com.itrailmpool.itrailmpoolviewer.model.response.MinerPerformanceStatsDto;
 import com.itrailmpool.itrailmpoolviewer.model.response.MinerStatisticResponse;
 import com.itrailmpool.itrailmpoolviewer.model.response.Payment;
-import com.itrailmpool.itrailmpoolviewer.model.response.PoolResponse;
+import com.itrailmpool.itrailmpoolviewer.model.response.PoolResponseDto;
 import com.itrailmpool.itrailmpoolviewer.model.response.PoolStatisticResponse;
 import com.itrailmpool.itrailmpoolviewer.model.response.WorkerPerformanceStatsContainer;
 import com.itrailmpool.itrailmpoolviewer.model.response.WorkerStatisticResponse;
@@ -27,7 +27,7 @@ public class PoolStatisticController {
     private final PoolStatisticService poolStatisticService;
 
     @GetMapping()
-    public PoolResponse getPools() {
+    public PoolResponseDto getPools() {
         return poolStatisticService.getPools();
     }
 
@@ -63,9 +63,9 @@ public class PoolStatisticController {
     }
 
     @GetMapping(value = "/{poolId}/miners")
-    public List<MinerPerformanceStats> getMiners(@PathVariable String poolId,
-                                                 @RequestParam(defaultValue = "0") int page,
-                                                 @RequestParam(defaultValue = "20") int size) {
+    public List<MinerPerformanceStatsDto> getMiners(@PathVariable String poolId,
+                                                    @RequestParam(defaultValue = "0") int page,
+                                                    @RequestParam(defaultValue = "20") int size) {
         return poolStatisticService.getMiners(poolId, page, size);
     }
 

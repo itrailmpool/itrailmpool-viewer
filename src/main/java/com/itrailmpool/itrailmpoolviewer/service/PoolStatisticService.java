@@ -1,6 +1,7 @@
 package com.itrailmpool.itrailmpoolviewer.service;
 
 import com.itrailmpool.itrailmpoolviewer.client.MiningcoreClient;
+import com.itrailmpool.itrailmpoolviewer.client.model.PoolInfo;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.DeviceStatisticEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.MinerSettingsEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.WorkerHashRateEntity;
@@ -9,13 +10,13 @@ import com.itrailmpool.itrailmpoolviewer.dal.repository.DeviceStatisticRepositor
 import com.itrailmpool.itrailmpoolviewer.dal.repository.MinerSettingsRepository;
 import com.itrailmpool.itrailmpoolviewer.dal.repository.WorkerStatisticRepository;
 import com.itrailmpool.itrailmpoolviewer.mapper.DeviceStatisticMapper;
+import com.itrailmpool.itrailmpoolviewer.mapper.PoolResponseMapper;
 import com.itrailmpool.itrailmpoolviewer.mapper.WorkerStatisticMapper;
 import com.itrailmpool.itrailmpoolviewer.model.response.Block;
-import com.itrailmpool.itrailmpoolviewer.model.response.MinerPerformanceStats;
+import com.itrailmpool.itrailmpoolviewer.model.response.MinerPerformanceStatsDto;
 import com.itrailmpool.itrailmpoolviewer.model.response.MinerStatisticResponse;
 import com.itrailmpool.itrailmpoolviewer.model.response.Payment;
-import com.itrailmpool.itrailmpoolviewer.model.response.PoolInfo;
-import com.itrailmpool.itrailmpoolviewer.model.response.PoolResponse;
+import com.itrailmpool.itrailmpoolviewer.model.response.PoolResponseDto;
 import com.itrailmpool.itrailmpoolviewer.model.response.PoolStatisticResponse;
 import com.itrailmpool.itrailmpoolviewer.model.response.WorkerDevicesStatistic;
 import com.itrailmpool.itrailmpoolviewer.model.response.WorkerPerformanceStatsContainer;
@@ -37,12 +38,13 @@ public class PoolStatisticService {
     private final WorkerStatisticRepository workerStatisticRepository;
     private final WorkerStatisticMapper workerStatisticMapper;
     private final DeviceStatisticMapper deviceStatisticMapper;
+    private final PoolResponseMapper poolResponseMapper;
 
-    public PoolResponse getPools() {
+    public PoolResponseDto getPools() {
         var pools = miningcoreClient.getPools();
         pools.getPools().forEach(this::updateConnectedMiners);
 
-        return pools;
+        return poolResponseMapper.toPoolResponseDto(pools);
     }
 
     public PoolStatisticResponse getPoolPerformance(String poolId) {
@@ -65,7 +67,7 @@ public class PoolStatisticService {
         return miningcoreClient.getMinerPerformance(poolId, address);
     }
 
-    public List<MinerPerformanceStats> getMiners(String poolId, int page, int size) {
+    public List<MinerPerformanceStatsDto> getMiners(String poolId, int page, int size) {
         return miningcoreClient.getMiners(poolId, page, size);
     }
 
