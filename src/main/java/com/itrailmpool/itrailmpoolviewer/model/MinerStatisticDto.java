@@ -11,7 +11,7 @@ import static com.itrailmpool.itrailmpoolviewer.config.ApplicationConfig.DEFAULT
 import static com.itrailmpool.itrailmpoolviewer.config.ApplicationConfig.UTC_TIMEZONE;
 
 @Data
-public class MinerStatisticResponse {
+public class MinerStatisticDto {
 
     private BigDecimal pendingShares;
     private BigDecimal pendingBalance;

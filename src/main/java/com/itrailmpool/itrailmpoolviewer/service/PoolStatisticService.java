@@ -2,7 +2,7 @@ package com.itrailmpool.itrailmpoolviewer.service;
 
 import com.itrailmpool.itrailmpoolviewer.model.Block;
 import com.itrailmpool.itrailmpoolviewer.model.MinerPerformanceStatsDto;
-import com.itrailmpool.itrailmpoolviewer.model.MinerStatisticResponse;
+import com.itrailmpool.itrailmpoolviewer.model.MinerStatisticDto;
 import com.itrailmpool.itrailmpoolviewer.model.Payment;
 import com.itrailmpool.itrailmpoolviewer.model.PoolResponseDto;
 import com.itrailmpool.itrailmpoolviewer.model.PoolStatisticResponse;
@@ -20,7 +20,7 @@ public interface PoolStatisticService {
 
     List<Payment> getPayments(String poolId, int page, int size);
 
-    MinerStatisticResponse getMinerStatistic(String poolId, String address);
+    MinerStatisticDto getMinerStatistic(String poolId, String address);
 
     List<WorkerPerformanceStatsContainerDto> getMinerPerformance(String poolId, String address);
 

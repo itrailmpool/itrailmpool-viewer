@@ -2,7 +2,7 @@ package com.itrailmpool.itrailmpoolviewer.controller;
 
 import com.itrailmpool.itrailmpoolviewer.model.Block;
 import com.itrailmpool.itrailmpoolviewer.model.MinerPerformanceStatsDto;
-import com.itrailmpool.itrailmpoolviewer.model.MinerStatisticResponse;
+import com.itrailmpool.itrailmpoolviewer.model.MinerStatisticDto;
 import com.itrailmpool.itrailmpoolviewer.model.Payment;
 import com.itrailmpool.itrailmpoolviewer.model.PoolResponseDto;
 import com.itrailmpool.itrailmpoolviewer.model.PoolStatisticResponse;
@@ -53,8 +53,8 @@ public class PoolStatisticController {
     }
 
     @GetMapping(value = "/{poolId}/miners/{address}")
-    public MinerStatisticResponse getMinerStatistic(@PathVariable String poolId,
-                                                    @PathVariable String address) {
+    public MinerStatisticDto getMinerStatistic(@PathVariable String poolId,
+                                               @PathVariable String address) {
         return poolStatisticService.getMinerStatistic(poolId, address);
     }
 

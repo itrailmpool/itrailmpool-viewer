@@ -1,10 +1,10 @@
 package com.itrailmpool.itrailmpoolviewer.client;
 
+import com.itrailmpool.itrailmpoolviewer.client.model.MinerStatisticResponse;
 import com.itrailmpool.itrailmpoolviewer.client.model.PoolResponse;
 import com.itrailmpool.itrailmpoolviewer.client.model.WorkerPerformanceStatsContainer;
 import com.itrailmpool.itrailmpoolviewer.model.Block;
 import com.itrailmpool.itrailmpoolviewer.model.MinerPerformanceStatsDto;
-import com.itrailmpool.itrailmpoolviewer.model.MinerStatisticResponse;
 import com.itrailmpool.itrailmpoolviewer.model.Payment;
 import com.itrailmpool.itrailmpoolviewer.model.PoolStatisticResponse;
 import org.springframework.beans.factory.annotation.Value;
