@@ -9,6 +9,7 @@ import com.itrailmpool.itrailmpoolviewer.mapper.WorkerStatisticMapper;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
@@ -28,6 +29,8 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
 
     private final JdbcTemplate jdbcTemplate;
     private final WorkerStatisticMapper workerStatisticMapper;
+    @Value("${app.pool.statistic.worker.online.check.interval:90}")
+    private Integer workerOnlineCheckInterval;
 
     private static RowMapper<WorkerShareStatisticEntity> getWorkerShareStatisticRowMapper() {
         return (resultSet, i) -> {
@@ -138,9 +141,9 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
                                    sum(average_hashrate_hour) AS average_hashrate_hour,
                                    sum(average_hashrate_day)  AS average_hashrate_day
                             FROM
-                                (SELECT (SELECT avg(hashrate) FROM minerstats WHERE worker = ms.worker AND created >= NOW() - interval '90 seconds') AS current_hashrate,
-                                        (SELECT avg(hashrate) FROM minerstats WHERE worker = ms.worker AND created >= NOW() - interval '1 hour')     AS average_hashrate_hour,
-                                        (SELECT avg(hashrate) FROM minerstats WHERE worker = ms.worker AND created >= NOW() - interval '1 day')      AS average_hashrate_day
+                                (SELECT (SELECT avg(hashrate) FROM minerstats WHERE worker = ms.worker AND created >= NOW() - make_interval(secs => ?)) AS current_hashrate,
+                                        (SELECT avg(hashrate) FROM minerstats WHERE worker = ms.worker AND created >= NOW() - interval '1 hour')        AS average_hashrate_hour,
+                                        (SELECT avg(hashrate) FROM minerstats WHERE worker = ms.worker AND created >= NOW() - interval '1 day')         AS average_hashrate_day
                                     FROM minerstats ms
                                     WHERE poolid = ?
                                       AND ms.created >= NOW() - interval '1 day'
@@ -151,6 +154,7 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
                                 )
                                 GROUP BY ms.worker) as subquery;""",
                     WORKER_HASH_RATE_ROW_MAPPER,
+                    workerOnlineCheckInterval,
                     poolId,
                     workerName);
         } catch (EmptyResultDataAccessException e) {

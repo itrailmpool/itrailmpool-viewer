@@ -1,13 +1,14 @@
 package com.itrailmpool.itrailmpoolviewer.service;
 
 import com.itrailmpool.itrailmpoolviewer.client.MiningcoreClient;
+import com.itrailmpool.itrailmpoolviewer.client.model.MinerStatisticResponse;
 import com.itrailmpool.itrailmpoolviewer.client.model.PoolInfo;
 import com.itrailmpool.itrailmpoolviewer.client.model.WorkerPerformanceStatsContainer;
 import com.itrailmpool.itrailmpoolviewer.dal.repository.DeviceStatisticRepository;
 import com.itrailmpool.itrailmpoolviewer.mapper.MiningcoreClientMapper;
 import com.itrailmpool.itrailmpoolviewer.model.Block;
 import com.itrailmpool.itrailmpoolviewer.model.MinerPerformanceStatsDto;
-import com.itrailmpool.itrailmpoolviewer.model.MinerStatisticResponse;
+import com.itrailmpool.itrailmpoolviewer.model.MinerStatisticDto;
 import com.itrailmpool.itrailmpoolviewer.model.Payment;
 import com.itrailmpool.itrailmpoolviewer.model.PoolResponseDto;
 import com.itrailmpool.itrailmpoolviewer.model.PoolStatisticResponse;
@@ -49,8 +50,10 @@ public class PoolStatisticServiceImpl implements PoolStatisticService {
     }
 
     @Override
-    public MinerStatisticResponse getMinerStatistic(String poolId, String address) {
-        return miningcoreClient.getMinerStatistic(poolId, address);
+    public MinerStatisticDto getMinerStatistic(String poolId, String address) {
+        MinerStatisticResponse minerStatistic = miningcoreClient.getMinerStatistic(poolId, address);
+
+        return miningcoreClientMapper.toMinerStatisticDto(minerStatistic);
     }
 
     @Override
