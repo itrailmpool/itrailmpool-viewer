@@ -1,14 +1,15 @@
 package com.itrailmpool.itrailmpoolviewer.controller;
 
-import com.itrailmpool.itrailmpoolviewer.model.response.Block;
-import com.itrailmpool.itrailmpoolviewer.model.response.MinerPerformanceStatsDto;
-import com.itrailmpool.itrailmpoolviewer.model.response.MinerStatisticResponse;
-import com.itrailmpool.itrailmpoolviewer.model.response.Payment;
-import com.itrailmpool.itrailmpoolviewer.model.response.PoolResponseDto;
-import com.itrailmpool.itrailmpoolviewer.model.response.PoolStatisticResponse;
-import com.itrailmpool.itrailmpoolviewer.model.response.WorkerPerformanceStatsContainer;
-import com.itrailmpool.itrailmpoolviewer.model.response.WorkerStatisticResponse;
+import com.itrailmpool.itrailmpoolviewer.model.Block;
+import com.itrailmpool.itrailmpoolviewer.model.MinerPerformanceStatsDto;
+import com.itrailmpool.itrailmpoolviewer.model.MinerStatisticResponse;
+import com.itrailmpool.itrailmpoolviewer.model.Payment;
+import com.itrailmpool.itrailmpoolviewer.model.PoolResponseDto;
+import com.itrailmpool.itrailmpoolviewer.model.PoolStatisticResponse;
+import com.itrailmpool.itrailmpoolviewer.model.WorkerPerformanceStatsContainer;
+import com.itrailmpool.itrailmpoolviewer.model.WorkerStatisticContainer;
 import com.itrailmpool.itrailmpoolviewer.service.PoolStatisticService;
+import com.itrailmpool.itrailmpoolviewer.service.WorkerStatisticService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.http.MediaType;
 import org.springframework.web.bind.annotation.GetMapping;
@@ -25,6 +26,7 @@ import java.util.List;
 public class PoolStatisticController {
 
     private final PoolStatisticService poolStatisticService;
+    private final WorkerStatisticService workerStatisticService;
 
     @GetMapping()
     public PoolResponseDto getPools() {
@@ -70,15 +72,14 @@ public class PoolStatisticController {
     }
 
     @GetMapping(value = "/{poolId}/workers")
-    public WorkerStatisticResponse getWorkerStatistic(@PathVariable String poolId,
-                                                      @RequestParam String workerName) {
-        return poolStatisticService.getWorkerStatistic(poolId, workerName);
+    public WorkerStatisticContainer getWorkerStatistic(@PathVariable String poolId,
+                                                       @RequestParam String workerName) {
+        return workerStatisticService.getWorkerStatistic(poolId, workerName);
     }
 
     @GetMapping(value = "/{poolId}/workers/{workerName}/performance")
     public List<WorkerPerformanceStatsContainer> getWorkerPerformance(@PathVariable String poolId,
                                                                       @PathVariable String workerName) {
-        return poolStatisticService.getWorkerPerformance(poolId, workerName);
+        return workerStatisticService.getWorkerPerformance(poolId, workerName);
     }
-
 }

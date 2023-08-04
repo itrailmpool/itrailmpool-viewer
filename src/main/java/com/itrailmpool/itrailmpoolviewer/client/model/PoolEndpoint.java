@@ -1,7 +1,7 @@
 package com.itrailmpool.itrailmpoolviewer.client.model;
 
-import com.itrailmpool.itrailmpoolviewer.model.response.TcpProxyProtocolConfig;
-import com.itrailmpool.itrailmpoolviewer.model.response.VarDiffConfig;
+import com.itrailmpool.itrailmpoolviewer.model.TcpProxyProtocolConfig;
+import com.itrailmpool.itrailmpoolviewer.model.VarDiffConfig;
 import lombok.Data;
 
 import java.math.BigDecimal;

@@ -1,7 +1,7 @@
 package com.itrailmpool.itrailmpoolviewer.mapper;
 
 import com.itrailmpool.itrailmpoolviewer.client.model.PoolResponse;
-import com.itrailmpool.itrailmpoolviewer.model.response.PoolResponseDto;
+import com.itrailmpool.itrailmpoolviewer.model.PoolResponseDto;
 import org.mapstruct.Mapper;
 
 @Mapper(componentModel = "spring")

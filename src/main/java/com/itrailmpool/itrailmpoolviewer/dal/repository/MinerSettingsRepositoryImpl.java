@@ -9,6 +9,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.stereotype.Repository;
 
+import java.util.List;
+
 @Repository
 @RequiredArgsConstructor
 public class MinerSettingsRepositoryImpl implements MinerSettingsRepository {
@@ -18,6 +20,7 @@ public class MinerSettingsRepositoryImpl implements MinerSettingsRepository {
 
     private final JdbcTemplate jdbcTemplate;
 
+    @Override
     public MinerSettingsEntity findByPoolIdAndWorkerName(String poolId, String workerName) {
         try {
             return jdbcTemplate.queryForObject("SELECT * FROM miner_settings s WHERE s.poolid = ? AND s.workername = ?", MINER_SETTINGS_ROW_MAPPER, poolId, workerName);
@@ -27,6 +30,10 @@ public class MinerSettingsRepositoryImpl implements MinerSettingsRepository {
         return null;
     }
 
+    @Override
+    public List<MinerSettingsEntity> findAll() {
+        return jdbcTemplate.query("SELECT * FROM miner_settings s WHERE 1=1", MINER_SETTINGS_ROW_MAPPER);
+    }
 
     private static RowMapper<MinerSettingsEntity> getMinerSettingsRowMapper() {
         return (resultSet, i) -> {

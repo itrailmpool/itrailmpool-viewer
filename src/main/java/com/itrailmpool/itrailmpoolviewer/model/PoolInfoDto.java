@@ -1,4 +1,4 @@
-package com.itrailmpool.itrailmpoolviewer.model.response;
+package com.itrailmpool.itrailmpoolviewer.model;
 
 import com.fasterxml.jackson.annotation.JsonFormat;
 import lombok.Data;

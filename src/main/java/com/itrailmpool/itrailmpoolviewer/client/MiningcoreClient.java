@@ -1,7 +1,12 @@
 package com.itrailmpool.itrailmpoolviewer.client;
 
 import com.itrailmpool.itrailmpoolviewer.client.model.PoolResponse;
-import com.itrailmpool.itrailmpoolviewer.model.response.*;
+import com.itrailmpool.itrailmpoolviewer.model.Block;
+import com.itrailmpool.itrailmpoolviewer.model.MinerPerformanceStatsDto;
+import com.itrailmpool.itrailmpoolviewer.model.MinerStatisticResponse;
+import com.itrailmpool.itrailmpoolviewer.model.Payment;
+import com.itrailmpool.itrailmpoolviewer.model.PoolStatisticResponse;
+import com.itrailmpool.itrailmpoolviewer.model.WorkerPerformanceStatsContainer;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;

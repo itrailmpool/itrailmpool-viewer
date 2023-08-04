@@ -3,7 +3,7 @@ package com.itrailmpool.itrailmpoolviewer.mapper;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.DeviceHashRateStatisticEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.DeviceSharesStatisticEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.DeviceStatisticEntity;
-import com.itrailmpool.itrailmpoolviewer.model.response.DeviceStatistic;
+import com.itrailmpool.itrailmpoolviewer.model.DeviceStatisticDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
 
@@ -43,7 +43,7 @@ public interface DeviceStatisticMapper {
     @Mapping(target = "dailyAverageHashRate", source = "hashRateStatistic.dailyAverageHashRate", defaultValue = "0")
     DeviceStatisticEntity toDeviceStatisticEntity(DeviceSharesStatisticEntity sharesStatistic, DeviceHashRateStatisticEntity hashRateStatistic);
 
-    List<DeviceStatistic> toDeviceStatistic(List<DeviceStatisticEntity> deviceStatisticEntities);
+    List<DeviceStatisticDto> toDeviceStatistic(List<DeviceStatisticEntity> deviceStatisticEntities);
 
     @Mapping(target = "workerName", source = "workerName")
     @Mapping(target = "deviceName", source = "deviceName")
@@ -52,5 +52,5 @@ public interface DeviceStatisticMapper {
     @Mapping(target = "hourlyAverageHashRate", source = "hourlyAverageHashRate", defaultValue = "0")
     @Mapping(target = "dailyAverageHashRate", source = "dailyAverageHashRate", defaultValue = "0")
     @Mapping(target = "isOnline", source = "isOnline")
-    DeviceStatistic toDeviceStatistic(DeviceStatisticEntity deviceStatisticEntity);
+    DeviceStatisticDto toDeviceStatistic(DeviceStatisticEntity deviceStatisticEntity);
 }

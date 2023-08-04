@@ -5,11 +5,10 @@ import com.itrailmpool.itrailmpoolviewer.dal.entity.WorkerHashRateStatisticEntit
 import com.itrailmpool.itrailmpoolviewer.dal.entity.WorkerPaymentStatisticEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.WorkerShareStatisticEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.WorkerStatisticEntity;
-import com.itrailmpool.itrailmpoolviewer.model.response.WorkerHashRate;
-import com.itrailmpool.itrailmpoolviewer.model.response.WorkerStatistic;
+import com.itrailmpool.itrailmpoolviewer.model.WorkerHashRateDto;
+import com.itrailmpool.itrailmpoolviewer.model.WorkerStatisticDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
-import org.mapstruct.Mappings;
 
 import java.time.Instant;
 import java.util.ArrayList;
@@ -51,9 +50,9 @@ public interface WorkerStatisticMapper {
     @Mapping(target = "totalPayment", source = "paymentStatistic.totalPayments", defaultValue = "0")
     WorkerStatisticEntity toWorkerStatistic(WorkerHashRateStatisticEntity hashRateStatistic, WorkerShareStatisticEntity shareStatistic, WorkerPaymentStatisticEntity paymentStatistic);
 
-    List<WorkerStatistic> toWorkerStatisticDto(List<WorkerStatisticEntity> workerStatisticEntities);
+    List<WorkerStatisticDto> toWorkerStatisticDto(List<WorkerStatisticEntity> workerStatisticEntities);
 
-    WorkerStatistic toWorkerStatisticDto(WorkerStatisticEntity workerStatisticEntity);
+    WorkerStatisticDto toWorkerStatisticDto(WorkerStatisticEntity workerStatisticEntity);
 
-    WorkerHashRate toWorkerHashRateDto(WorkerHashRateEntity workerHashRateEntity);
+    WorkerHashRateDto toWorkerHashRateDto(WorkerHashRateEntity workerHashRateEntity);
 }
