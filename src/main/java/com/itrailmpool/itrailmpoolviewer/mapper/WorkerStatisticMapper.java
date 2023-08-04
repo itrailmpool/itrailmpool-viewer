@@ -31,8 +31,8 @@ public interface WorkerStatisticMapper {
                 .collect(Collectors.toMap(WorkerPaymentStatisticEntity::getDate, Function.identity()));
 
         List<WorkerStatisticEntity> workerStatistics = new ArrayList<>(workerHashRateStatistics.size());
-        hashRateStatisticMap.forEach((date, hashRateStatistic) -> {
-            WorkerShareStatisticEntity shareStatistic = shareStatisticMap.get(date);
+        shareStatisticMap.forEach((date, shareStatistic) -> {
+            WorkerHashRateStatisticEntity hashRateStatistic = hashRateStatisticMap.get(date);
             WorkerPaymentStatisticEntity paymentStatistic = paymentStatisticMap.get(date);
 
             workerStatistics.add(toWorkerStatistic(hashRateStatistic, shareStatistic, paymentStatistic));
