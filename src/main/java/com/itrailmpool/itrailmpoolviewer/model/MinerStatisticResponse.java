@@ -20,6 +20,6 @@ public class MinerStatisticResponse {
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DEFAULT_DATA_FORMAT_PATTERN, timezone = UTC_TIMEZONE)
     private Instant lastPayment;
     private String lastPaymentLink;
-    private WorkerPerformanceStatsContainer performance;
-    private List<WorkerPerformanceStatsContainer> performanceSamples;
+    private WorkerPerformanceStatsContainerDto performance;
+    private List<WorkerPerformanceStatsContainerDto> performanceSamples;
 }

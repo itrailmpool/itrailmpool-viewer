@@ -6,7 +6,7 @@ import com.itrailmpool.itrailmpoolviewer.model.MinerStatisticResponse;
 import com.itrailmpool.itrailmpoolviewer.model.Payment;
 import com.itrailmpool.itrailmpoolviewer.model.PoolResponseDto;
 import com.itrailmpool.itrailmpoolviewer.model.PoolStatisticResponse;
-import com.itrailmpool.itrailmpoolviewer.model.WorkerPerformanceStatsContainer;
+import com.itrailmpool.itrailmpoolviewer.model.WorkerPerformanceStatsContainerDto;
 
 import java.util.List;
 
@@ -22,7 +22,7 @@ public interface PoolStatisticService {
 
     MinerStatisticResponse getMinerStatistic(String poolId, String address);
 
-    List<WorkerPerformanceStatsContainer> getMinerPerformance(String poolId, String address);
+    List<WorkerPerformanceStatsContainerDto> getMinerPerformance(String poolId, String address);
 
     List<MinerPerformanceStatsDto> getMiners(String poolId, int page, int size);
 }

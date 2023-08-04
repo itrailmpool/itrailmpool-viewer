@@ -41,7 +41,7 @@ public interface WorkerStatisticMapper {
         return workerStatistics;
     }
 
-    @Mapping(target = "date", source = "hashRateStatistic.date")
+    @Mapping(target = "date", source = "shareStatistic.date")
     @Mapping(target = "averageHashRate", source = "hashRateStatistic.averageHashRate", defaultValue = "0")
     @Mapping(target = "averageSharesPerSecond", source = "hashRateStatistic.averageSharesPerSecond", defaultValue = "0")
     @Mapping(target = "workerName", source = "shareStatistic.workerName")

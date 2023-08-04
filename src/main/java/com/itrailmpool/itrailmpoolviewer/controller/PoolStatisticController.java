@@ -6,8 +6,8 @@ import com.itrailmpool.itrailmpoolviewer.model.MinerStatisticResponse;
 import com.itrailmpool.itrailmpoolviewer.model.Payment;
 import com.itrailmpool.itrailmpoolviewer.model.PoolResponseDto;
 import com.itrailmpool.itrailmpoolviewer.model.PoolStatisticResponse;
-import com.itrailmpool.itrailmpoolviewer.model.WorkerPerformanceStatsContainer;
-import com.itrailmpool.itrailmpoolviewer.model.WorkerStatisticContainer;
+import com.itrailmpool.itrailmpoolviewer.model.WorkerPerformanceStatsContainerDto;
+import com.itrailmpool.itrailmpoolviewer.model.WorkerStatisticContainerDto;
 import com.itrailmpool.itrailmpoolviewer.service.PoolStatisticService;
 import com.itrailmpool.itrailmpoolviewer.service.WorkerStatisticService;
 import lombok.RequiredArgsConstructor;
@@ -59,8 +59,8 @@ public class PoolStatisticController {
     }
 
     @GetMapping(value = "/{poolId}/miners/{address}/performance")
-    public List<WorkerPerformanceStatsContainer> getMinerPerformance(@PathVariable String poolId,
-                                                                     @PathVariable String address) {
+    public List<WorkerPerformanceStatsContainerDto> getMinerPerformance(@PathVariable String poolId,
+                                                                        @PathVariable String address) {
         return poolStatisticService.getMinerPerformance(poolId, address);
     }
 
@@ -72,14 +72,14 @@ public class PoolStatisticController {
     }
 
     @GetMapping(value = "/{poolId}/workers")
-    public WorkerStatisticContainer getWorkerStatistic(@PathVariable String poolId,
-                                                       @RequestParam String workerName) {
+    public WorkerStatisticContainerDto getWorkerStatistic(@PathVariable String poolId,
+                                                          @RequestParam String workerName) {
         return workerStatisticService.getWorkerStatistic(poolId, workerName);
     }
 
     @GetMapping(value = "/{poolId}/workers/{workerName}/performance")
-    public List<WorkerPerformanceStatsContainer> getWorkerPerformance(@PathVariable String poolId,
-                                                                      @PathVariable String workerName) {
+    public List<WorkerPerformanceStatsContainerDto> getWorkerPerformance(@PathVariable String poolId,
+                                                                         @PathVariable String workerName) {
         return workerStatisticService.getWorkerPerformance(poolId, workerName);
     }
 }

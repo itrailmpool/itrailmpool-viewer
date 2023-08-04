@@ -5,7 +5,7 @@ import lombok.Data;
 import java.math.BigDecimal;
 
 @Data
-public class WorkerPerformanceStats {
+public class WorkerPerformanceStatsDto {
 
     private BigDecimal hashRate;
     private BigDecimal sharesPerSecond;

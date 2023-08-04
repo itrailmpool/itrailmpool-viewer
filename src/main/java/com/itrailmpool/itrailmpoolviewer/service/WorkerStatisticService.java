@@ -1,12 +1,12 @@
 package com.itrailmpool.itrailmpoolviewer.service;
 
-import com.itrailmpool.itrailmpoolviewer.model.WorkerPerformanceStatsContainer;
-import com.itrailmpool.itrailmpoolviewer.model.WorkerStatisticContainer;
+import com.itrailmpool.itrailmpoolviewer.model.WorkerPerformanceStatsContainerDto;
+import com.itrailmpool.itrailmpoolviewer.model.WorkerStatisticContainerDto;
 
 import java.util.List;
 
 public interface WorkerStatisticService {
 
-    WorkerStatisticContainer getWorkerStatistic(String poolId, String workerName);
-    List<WorkerPerformanceStatsContainer> getWorkerPerformance(String poolId, String workerName);
+    WorkerStatisticContainerDto getWorkerStatistic(String poolId, String workerName);
+    List<WorkerPerformanceStatsContainerDto> getWorkerPerformance(String poolId, String workerName);
 }

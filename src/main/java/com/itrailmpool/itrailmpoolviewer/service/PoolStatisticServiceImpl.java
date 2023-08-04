@@ -2,15 +2,16 @@ package com.itrailmpool.itrailmpoolviewer.service;
 
 import com.itrailmpool.itrailmpoolviewer.client.MiningcoreClient;
 import com.itrailmpool.itrailmpoolviewer.client.model.PoolInfo;
+import com.itrailmpool.itrailmpoolviewer.client.model.WorkerPerformanceStatsContainer;
 import com.itrailmpool.itrailmpoolviewer.dal.repository.DeviceStatisticRepository;
-import com.itrailmpool.itrailmpoolviewer.mapper.PoolResponseMapper;
+import com.itrailmpool.itrailmpoolviewer.mapper.MiningcoreClientMapper;
 import com.itrailmpool.itrailmpoolviewer.model.Block;
 import com.itrailmpool.itrailmpoolviewer.model.MinerPerformanceStatsDto;
 import com.itrailmpool.itrailmpoolviewer.model.MinerStatisticResponse;
 import com.itrailmpool.itrailmpoolviewer.model.Payment;
 import com.itrailmpool.itrailmpoolviewer.model.PoolResponseDto;
 import com.itrailmpool.itrailmpoolviewer.model.PoolStatisticResponse;
-import com.itrailmpool.itrailmpoolviewer.model.WorkerPerformanceStatsContainer;
+import com.itrailmpool.itrailmpoolviewer.model.WorkerPerformanceStatsContainerDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
 
@@ -22,14 +23,14 @@ public class PoolStatisticServiceImpl implements PoolStatisticService {
 
     private final MiningcoreClient miningcoreClient;
     private final DeviceStatisticRepository deviceStatisticRepository;
-    private final PoolResponseMapper poolResponseMapper;
+    private final MiningcoreClientMapper miningcoreClientMapper;
 
     @Override
     public PoolResponseDto getPools() {
         var pools = miningcoreClient.getPools();
         pools.getPools().forEach(this::updateConnectedMiners);
 
-        return poolResponseMapper.toPoolResponseDto(pools);
+        return miningcoreClientMapper.toPoolResponseDto(pools);
     }
 
     @Override
@@ -53,8 +54,10 @@ public class PoolStatisticServiceImpl implements PoolStatisticService {
     }
 
     @Override
-    public List<WorkerPerformanceStatsContainer> getMinerPerformance(String poolId, String address) {
-        return miningcoreClient.getMinerPerformance(poolId, address);
+    public List<WorkerPerformanceStatsContainerDto> getMinerPerformance(String poolId, String address) {
+        List<WorkerPerformanceStatsContainer> minerPerformance = miningcoreClient.getMinerPerformance(poolId, address);
+
+        return miningcoreClientMapper.toWorkerPerformanceStatsContainerDto(minerPerformance);
     }
 
     @Override
