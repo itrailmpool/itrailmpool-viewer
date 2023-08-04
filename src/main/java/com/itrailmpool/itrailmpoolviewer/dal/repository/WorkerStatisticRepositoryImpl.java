@@ -107,7 +107,7 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
                                      FROM shares_statistic s
                                      WHERE s.worker = ?
                                  )
-                                 GROUP BY date_trunc('day', m.created)
+                                 GROUP BY date_trunc('day', m.created), m.worker
                              ) AS subquery
                         GROUP BY date
                         ORDER BY date DESC""",
