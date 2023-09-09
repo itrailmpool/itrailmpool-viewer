@@ -9,10 +9,12 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Service;
 
 import java.time.LocalDate;
 import java.util.List;
 
+@Service
 @RequiredArgsConstructor
 public class WorkerStatisticUpdateJob {
 
@@ -21,7 +23,7 @@ public class WorkerStatisticUpdateJob {
     private final MinerSettingsRepository minerSettingsRepository;
     private final WorkerStatisticRepository workerStatisticRepository;
 
-    @Scheduled(cron = "0 0 2 * * ?")
+    @Scheduled(cron = "0 0 1 * * ?")
     private void saveWorkersDailyStatistic() {
         LOGGER.info("Saving workers daily statistic");
 
@@ -29,8 +31,6 @@ public class WorkerStatisticUpdateJob {
 
         minerSettingsRepository.findAll()
                 .forEach(minerSettings -> this.updateWorkerStatisticData(minerSettings, lastWorkerDailyStatisticDate));
-
-        LOGGER.info("Workers daily statistic saved");
     }
 
     private void updateWorkerStatisticData(MinerSettingsEntity minerSettings, LocalDate dateFrom) {

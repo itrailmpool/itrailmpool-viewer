@@ -1,6 +1,5 @@
 package com.itrailmpool.itrailmpoolviewer.aspect;
 
-import org.aspectj.lang.JoinPoint;
 import org.aspectj.lang.annotation.AfterThrowing;
 import org.aspectj.lang.annotation.Aspect;
 import org.aspectj.lang.annotation.Pointcut;
@@ -15,11 +14,10 @@ public class MiningcoreClientAspect {
     private static final Logger LOGGER = LoggerFactory.getLogger(MiningcoreClientAspect.class);
 
     @Pointcut("execution(public * com.itrailmpool.itrailmpoolviewer.client.MiningcoreClient.*(..))")
-    private void miningcoreClientMethods() {
-    }
+    private void miningcoreClientMethods() {}
 
     @AfterThrowing(pointcut = "miningcoreClientMethods()", throwing = "exception")
-    public void logException(JoinPoint jp, Throwable exception) {
-        LOGGER.error("Miningcore client request exception: [{}], method signature: [{}]", exception.getMessage(), jp.getSignature(), exception);
+    public void logException(Throwable exception) {
+        LOGGER.error("Miningcore Client request exception: {}", exception.getMessage(), exception);
     }
 }
