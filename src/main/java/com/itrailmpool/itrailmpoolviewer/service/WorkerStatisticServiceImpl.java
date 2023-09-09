@@ -57,7 +57,7 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
 
     @Override
     public WorkerStatisticContainerDto getWorkerStatistic(String poolId, String workerName) {
-        if (schedulingConfig.isEnable()) {
+        if (schedulingConfig.isCacheEnabled()) {
             LOGGER.debug("Scheduling is enable. Get worker statistic from cache");
 
             return workerStatisticByWorker.get(buildPoolWorkerKey(poolId, workerName));
