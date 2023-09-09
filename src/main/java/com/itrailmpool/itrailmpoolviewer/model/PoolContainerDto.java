@@ -7,7 +7,7 @@ import java.util.List;
 
 @Data
 @Accessors(chain = true)
-public class PoolResponseDto {
+public class PoolContainerDto {
 
     private List<PoolInfoDto> pools;
 }

@@ -1,24 +1,24 @@
 package com.itrailmpool.itrailmpoolviewer.service;
 
-import com.itrailmpool.itrailmpoolviewer.model.Block;
+import com.itrailmpool.itrailmpoolviewer.model.BlockDto;
 import com.itrailmpool.itrailmpoolviewer.model.MinerPerformanceStatsDto;
 import com.itrailmpool.itrailmpoolviewer.model.MinerStatisticDto;
-import com.itrailmpool.itrailmpoolviewer.model.Payment;
-import com.itrailmpool.itrailmpoolviewer.model.PoolResponseDto;
-import com.itrailmpool.itrailmpoolviewer.model.PoolStatisticResponse;
+import com.itrailmpool.itrailmpoolviewer.model.PaymentDto;
+import com.itrailmpool.itrailmpoolviewer.model.PoolContainerDto;
+import com.itrailmpool.itrailmpoolviewer.model.PoolStatisticContainerDto;
 import com.itrailmpool.itrailmpoolviewer.model.WorkerPerformanceStatsContainerDto;
 
 import java.util.List;
 
 public interface PoolStatisticService {
 
-    PoolResponseDto getPools();
+    PoolContainerDto getPools();
 
-    PoolStatisticResponse getPoolPerformance(String poolId);
+    PoolStatisticContainerDto getPoolPerformance(String poolId);
 
-    List<Block> getBlocks(String poolId, int page, int size);
+    List<BlockDto> getBlocks(String poolId, int page, int size);
 
-    List<Payment> getPayments(String poolId, int page, int size);
+    List<PaymentDto> getPayments(String poolId, int page, int size);
 
     MinerStatisticDto getMinerStatistic(String poolId, String address);
 

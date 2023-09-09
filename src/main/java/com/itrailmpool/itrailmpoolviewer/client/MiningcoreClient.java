@@ -1,12 +1,16 @@
 package com.itrailmpool.itrailmpoolviewer.client;
 
+import com.itrailmpool.itrailmpoolviewer.client.model.Block;
+import com.itrailmpool.itrailmpoolviewer.client.model.MinerPerformanceStats;
 import com.itrailmpool.itrailmpoolviewer.client.model.MinerStatisticResponse;
+import com.itrailmpool.itrailmpoolviewer.client.model.Payment;
 import com.itrailmpool.itrailmpoolviewer.client.model.PoolResponse;
+import com.itrailmpool.itrailmpoolviewer.client.model.PoolStatisticResponse;
 import com.itrailmpool.itrailmpoolviewer.client.model.WorkerPerformanceStatsContainer;
-import com.itrailmpool.itrailmpoolviewer.model.Block;
+import com.itrailmpool.itrailmpoolviewer.model.BlockDto;
 import com.itrailmpool.itrailmpoolviewer.model.MinerPerformanceStatsDto;
-import com.itrailmpool.itrailmpoolviewer.model.Payment;
-import com.itrailmpool.itrailmpoolviewer.model.PoolStatisticResponse;
+import com.itrailmpool.itrailmpoolviewer.model.PaymentDto;
+import com.itrailmpool.itrailmpoolviewer.model.PoolStatisticContainerDto;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
@@ -113,21 +117,21 @@ public class MiningcoreClient {
         }
     }
 
-    public List<MinerPerformanceStatsDto> getMiners(String poolId, int page, int size) {
+    public List<MinerPerformanceStats> getMiners(String poolId, int page, int size) {
         UriComponentsBuilder builder = UriComponentsBuilder
                 .fromHttpUrl(primaryUrl)
                 .pathSegment("pools", poolId, "miners")
                 .queryParam("page", page)
                 .queryParam("pageSize", size);
         try {
-            ResponseEntity<List<MinerPerformanceStatsDto>> response =
+            ResponseEntity<List<MinerPerformanceStats>> response =
                     restTemplate.exchange(builder.toUriString(), HttpMethod.GET, null, new ParameterizedTypeReference<>() {
                     });
 
             return response.getBody();
         } catch (RestClientException e) {
             builder.replacePath(secondaryUrl + "pools/" + poolId + "/miners");
-            ResponseEntity<List<MinerPerformanceStatsDto>> response =
+            ResponseEntity<List<MinerPerformanceStats>> response =
                     restTemplate.exchange(builder.toUriString(), HttpMethod.GET, null, new ParameterizedTypeReference<>() {
                     });
 

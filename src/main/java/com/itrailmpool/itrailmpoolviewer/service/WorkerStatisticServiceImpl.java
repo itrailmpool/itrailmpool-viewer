@@ -65,7 +65,7 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
 
         LOGGER.debug("Scheduling is disable. Get worker statistic from database");
 
-        return getWorkerStatistic(poolId, workerName);
+        return getWorkerStatisticData(poolId, workerName);
     }
 
     @Override
@@ -96,6 +96,7 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
     private WorkerStatisticContainerDto getWorkerStatisticData(String poolId, String workerName) {
         List<DeviceStatisticEntity> devicesStatistic = deviceStatisticRepository.getWorkerDevicesStatistic(poolId, workerName);
         WorkerHashRateEntity workerHashRateEntity = workerStatisticRepository.getWorkerHashRate(poolId, workerName);
+
         List<WorkerStatisticEntity> workerStatistic  = workerStatisticRepository.getWorkerStatistic(poolId, workerName).stream()
                 .sorted(Comparator.comparing(WorkerStatisticEntity::getDate).reversed())
                 .toList();

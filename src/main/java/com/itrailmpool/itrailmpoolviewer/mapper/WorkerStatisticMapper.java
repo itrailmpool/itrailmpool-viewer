@@ -9,8 +9,12 @@ import com.itrailmpool.itrailmpoolviewer.model.WorkerHashRateDto;
 import com.itrailmpool.itrailmpoolviewer.model.WorkerStatisticDto;
 import org.mapstruct.Mapper;
 import org.mapstruct.Mapping;
+import org.mapstruct.Named;
 
+import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
+import java.time.ZoneId;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
@@ -41,13 +45,13 @@ public interface WorkerStatisticMapper {
         return workerStatistics;
     }
 
-    @Mapping(target = "date", source = "shareStatistic.date")
-    @Mapping(target = "averageHashRate", source = "hashRateStatistic.averageHashRate", defaultValue = "0")
-    @Mapping(target = "averageSharesPerSecond", source = "hashRateStatistic.averageSharesPerSecond", defaultValue = "0")
+    @Mapping(target = "date", source = "shareStatistic.date", qualifiedByName = "instantToLocalDate")
+    @Mapping(target = "averageHashRate", expression = "java( toAverageHashRate(hashRateStatistic) )")
     @Mapping(target = "workerName", source = "shareStatistic.workerName")
+    @Mapping(target = "poolId", source = "shareStatistic.poolId")
     @Mapping(target = "totalAcceptedShares", source = "shareStatistic.totalAcceptedShares", defaultValue = "0")
     @Mapping(target = "totalRejectedShares", source = "shareStatistic.totalRejectedShares", defaultValue = "0")
-    @Mapping(target = "totalPayment", source = "paymentStatistic.totalPayments", defaultValue = "0")
+    @Mapping(target = "totalPayment", expression = "java( toTotalPayment(paymentStatistic) )")
     WorkerStatisticEntity toWorkerStatistic(WorkerHashRateStatisticEntity hashRateStatistic, WorkerShareStatisticEntity shareStatistic, WorkerPaymentStatisticEntity paymentStatistic);
 
     List<WorkerStatisticDto> toWorkerStatisticDto(List<WorkerStatisticEntity> workerStatisticEntities);
@@ -55,4 +59,28 @@ public interface WorkerStatisticMapper {
     WorkerStatisticDto toWorkerStatisticDto(WorkerStatisticEntity workerStatisticEntity);
 
     WorkerHashRateDto toWorkerHashRateDto(WorkerHashRateEntity workerHashRateEntity);
+
+    default BigDecimal toTotalPayment(WorkerPaymentStatisticEntity paymentStatistic) {
+        if (paymentStatistic == null || paymentStatistic.getTotalPayments() == null) {
+            return BigDecimal.ZERO;
+        }
+
+        return paymentStatistic.getTotalPayments();
+    }
+
+    default BigDecimal toAverageHashRate(WorkerHashRateStatisticEntity hashRateStatistic) {
+        if (hashRateStatistic == null || hashRateStatistic.getAverageHashRate() == null) {
+            return BigDecimal.ZERO;
+        }
+
+        return hashRateStatistic.getAverageHashRate();
+    }
+
+    @Named("instantToLocalDate")
+    default LocalDate instantToLocalDate(Instant instant) {
+        if (instant == null) {
+            return null;
+        }
+        return instant.atZone(ZoneId.systemDefault()).toLocalDate();
+    }
 }
