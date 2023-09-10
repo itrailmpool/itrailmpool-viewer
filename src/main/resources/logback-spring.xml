@@ -4,17 +4,15 @@
 
     <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
         <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
-            <!-- Minimum logging level to be presented in the console logs-->
             <level>DEBUG</level>
         </filter>
         <encoder>
-            <pattern>%clr(%d{HH:mm:ss.SSS}){faint} %clr(%-5p) %clr(---){faint} %clr([%15.15t]){faint}%clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n%wEx
+            <pattern>%clr(%d{HH:mm:ss.SSS}){faint} %clr(%-5p) %clr(---){faint}%clr([%15.15t]){faint}%clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n%wEx
             </pattern>
             <charset>utf8</charset>
         </encoder>
     </appender>
 
-    <!-- Файловый аппендер -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>myapp.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
@@ -22,16 +20,13 @@
             <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder>
-            <pattern>%clr(%d{HH:mm:ss.SSS}){faint} %clr(%-5p) %clr(---){faint} %clr([%15.15t]){faint}%clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n%wEx
+            <pattern>%clr(%d{HH:mm:ss.SSS}){faint} %clr(%-5p) %clr(---){faint}%clr([%15.15t]){faint}%clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n%wEx
             </pattern>
         </encoder>
     </appender>
 
     <springProfile name="dev">
-        <logger name="com.itrailmpool" level="DEBUG" additivity="false">
-            <appender-ref ref="CONSOLE"/>
-        </logger>
-        <root level="INFO">
+        <root level="DEBUG">
             <appender-ref ref="CONSOLE"/>
         </root>
     </springProfile>
@@ -39,7 +34,7 @@
     <springProfile name="test, prod">
         <root level="INFO">
             <appender-ref ref="CONSOLE"/>
-            <appender-ref ref="FILE" />
+            <appender-ref ref="FILE"/>
         </root>
     </springProfile>
 </configuration>

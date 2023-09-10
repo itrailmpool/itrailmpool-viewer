@@ -29,6 +29,8 @@ public class WorkerStatisticUpdateJob {
 
         minerSettingsRepository.findAll()
                 .forEach(minerSettings -> this.updateWorkerStatisticData(minerSettings, lastWorkerDailyStatisticDate));
+
+        LOGGER.info("Workers daily statistic saved");
     }
 
     private void updateWorkerStatisticData(MinerSettingsEntity minerSettings, LocalDate dateFrom) {

@@ -87,6 +87,7 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
                 .map(this::getWorkerStatisticData)
                 .collect(Collectors.toMap(workerStatistic ->
                         buildPoolWorkerKey(workerStatistic.getPoolId(), workerStatistic.getWorkerName()), Function.identity()));
+        LOGGER.info("WorkerStatistic cache reloaded");
     }
 
     private WorkerStatisticContainerDto getWorkerStatisticData(MinerSettingsEntity minerSettings) {
