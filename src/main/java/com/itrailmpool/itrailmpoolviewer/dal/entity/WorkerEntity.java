@@ -7,7 +7,8 @@ import java.time.Instant;
 @Data
 public class WorkerEntity {
 
-    private long id;
+    private Long id;
     private String name;
-    private Instant createdTimestamp;
+    private String poolId;
+    private Instant creationDate;
 }
