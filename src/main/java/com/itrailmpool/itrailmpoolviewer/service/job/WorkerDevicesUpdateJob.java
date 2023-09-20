@@ -41,16 +41,6 @@ public class WorkerDevicesUpdateJob {
         LOGGER.info("Worker's new devices saved");
     }
 
-    @Scheduled(initialDelay = 2, fixedDelay = 24 * 30 * 60, timeUnit = TimeUnit.MINUTES)
-    private void addWorkerDevicesFromShareStatistic() {
-        LOGGER.info("Worker's new devices saving");
-
-        workerRepository.findAll()
-                .forEach(worker -> this.updateDevicesData(worker, Instant.now().minus(120, ChronoUnit.DAYS)));
-
-        LOGGER.info("Worker's new devices saved");
-    }
-
     private void updateDevicesData(WorkerEntity worker) {
         try {
             Instant fromDate = Instant.now().minus(1, ChronoUnit.DAYS);
