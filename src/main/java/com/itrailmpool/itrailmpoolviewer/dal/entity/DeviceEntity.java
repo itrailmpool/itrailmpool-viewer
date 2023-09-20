@@ -7,10 +7,13 @@ import java.time.Instant;
 @Data
 public class DeviceEntity {
 
-    private long id;
+    private Long id;
     private String name;
-    private long workerId;
-    private Instant created;
-    private Instant modified;
-    private boolean isEnabled;
+    private Long workerId;
+    private Instant createdDate;
+    private Instant modifiedDate;
+    private Instant lastValidShareDate;
+    private Boolean isEnabled;
+
+
 }

@@ -119,7 +119,7 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
                         .setWorkerDevicesStatistic(deviceStatisticMapper.toDeviceStatistic(devicesStatistic)));
     }
 
-    private String buildPoolWorkerKey(String poolId, String workerName) {
+    public static String buildPoolWorkerKey(String poolId, String workerName) {
         return poolId + KEY_SPLITTER + workerName;
     }
 }
