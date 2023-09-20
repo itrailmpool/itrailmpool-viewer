@@ -34,7 +34,11 @@ public class WorkerStatisticUpdateJob {
     }
 
     private void updateWorkerStatisticData(MinerSettingsEntity minerSettings, LocalDate dateFrom) {
-        updateWorkerStatisticData(minerSettings.getPoolId(), minerSettings.getWorkerName(), dateFrom);
+        try {
+            updateWorkerStatisticData(minerSettings.getPoolId(), minerSettings.getWorkerName(), dateFrom);
+        } catch (Throwable e) {
+            LOGGER.error("Unable to update worker statistic: {}", e.getMessage(), e);
+        }
     }
 
     private void updateWorkerStatisticData(String poolId, String workerName, LocalDate dateFrom) {

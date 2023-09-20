@@ -1,5 +1,6 @@
 package com.itrailmpool.itrailmpoolviewer.dal.repository;
 
+import com.itrailmpool.itrailmpoolviewer.dal.entity.DeviceEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.DeviceHashRateStatisticEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.DeviceSharesStatisticEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.DeviceStatisticEntity;
@@ -8,9 +9,12 @@ import lombok.RequiredArgsConstructor;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.util.List;
+import java.util.Map;
 
 @Repository
 @RequiredArgsConstructor
@@ -18,8 +22,10 @@ public class DeviceStatisticRepositoryImpl implements DeviceStatisticRepository 
 
     private static final RowMapper<DeviceSharesStatisticEntity> DEVICE_STATISTIC_ROW_MAPPER = getDeviceStatisticRowMapper();
     private static final RowMapper<DeviceHashRateStatisticEntity> DEVICE_HASH_RATE_STATISTIC_ROW_MAPPER = getDeviceHashRateStatisticRowMapper();
+    private static final RowMapper<DeviceEntity> DEVICE_ENTITY_ROW_MAPPER = getDeviceRowMapper();
 
     private final JdbcTemplate jdbcTemplate;
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     private final DeviceStatisticMapper deviceStatisticMapper;
     @Value("${app.pool.statistic.device.online.check.interval:90}")
     private Integer deviceOnlineCheckInterval;
@@ -51,9 +57,59 @@ public class DeviceStatisticRepositoryImpl implements DeviceStatisticRepository 
         };
     }
 
+    private static RowMapper<DeviceEntity> getDeviceRowMapper() {
+        return (resultSet, i) -> {
+            DeviceEntity deviceEntity = new DeviceEntity();
+
+            deviceEntity.setId(resultSet.getLong("id"));
+            deviceEntity.setName(resultSet.getString("name"));
+            deviceEntity.setWorkerId(resultSet.getLong("worker_id"));
+            deviceEntity.setCreated(resultSet.getTimestamp("creation_date").toInstant());
+            deviceEntity.setModified(resultSet.getTimestamp("modification_date").toInstant());
+            deviceEntity.setEnabled(resultSet.getBoolean("is_enabled"));
+
+            return deviceEntity;
+        }
+    }
+
+    private static String findDevicesByWorkerName() {
+        return """
+                SELECT d."name"
+                FROM devices d 
+                INNER JOIN workers w ON d.worker_id = w.id 
+                WHERE w."name" = ? AND d.is_enabled = true
+                """;
+    }
+
+//    private static List<String> findDevicesByWorkerNameAndCreationDate() {
+//        return """
+//                SELECT d."name"
+//                FROM devices d
+//                INNER JOIN workers w ON d.worker_id = w.id
+//                WHERE w."name" = ? AND
+//                      d.is_enabled = true AND
+//                      d.criation_date >= ?
+//                """;
+//    }
+//
+    public List<DeviceEntity> findDevicesByWorkerNameAndPoolId(String workerName, String poolId) {
+        String sql = "SELECT d.* " +
+                "FROM devices d " +
+                "INNER JOIN workers w ON d.worker_id = w.id " +
+                "WHERE w."name" = (:name) " +
+                "   AND w.pool_id = (:pool_id)" +
+                "   AND d.is_enabled = true";
+
+        MapSqlParameterSource parameters = new MapSqlParameterSource();
+        parameters.addValue("name", workerName);
+        parameters.addValue("pool_id", poolId);
+
+        return namedParameterJdbcTemplate.query(sql, parameters, DEVICE_ENTITY_ROW_MAPPER);
+    }
+
     @Override
     public List<DeviceStatisticEntity> getWorkerDevicesStatistic(String poolId, String workerName) {
-
+        findDevicesByWorkerName(workerName)
 
         List<DeviceSharesStatisticEntity> deviceSharesStatistics = jdbcTemplate.query(
                 """ 
