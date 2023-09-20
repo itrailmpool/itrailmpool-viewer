@@ -7,4 +7,12 @@
         <sqlFile encoding="utf8" path="001_worker_daily_statistic.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
 
+    <changeSet id="init/002_workers" author="dmitry_kuksa">
+        <sqlFile encoding="utf8" path="002_workers.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
+    <changeSet id="init/003_devices" author="dmitry_kuksa">
+        <sqlFile encoding="utf8" path="003_devices.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
 </databaseChangeLog>
