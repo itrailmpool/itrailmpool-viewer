@@ -23,6 +23,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.util.Collections;
 import java.util.Comparator;
@@ -48,6 +49,7 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
     private final DeviceStatisticMapper deviceStatisticMapper;
     private final MiningcoreClientMapper miningcoreClientMapper;
     private final SchedulingConfig schedulingConfig;
+    private final TransactionTemplate transactionTemplate;
 
     private volatile Map<String, WorkerStatisticContainerDto> workerStatisticByWorker = new HashMap<>();
 
@@ -93,10 +95,14 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
     private void reload() {
         try {
             LOGGER.info("WorkerStatistic cache reloading");
-            workerStatisticByWorker = minerSettingsRepository.findAll().stream()
-                    .map(this::getWorkerStatisticData)
-                    .collect(Collectors.toMap(workerStatistic ->
-                            buildPoolWorkerKey(workerStatistic.getPoolId(), workerStatistic.getWorkerName()), Function.identity()));
+
+            transactionTemplate.executeWithoutResult(status -> {
+                workerStatisticByWorker = minerSettingsRepository.findAll().stream()
+                        .map(this::getWorkerStatisticData)
+                        .collect(Collectors.toMap(workerStatistic ->
+                                buildPoolWorkerKey(workerStatistic.getPoolId(), workerStatistic.getWorkerName()), Function.identity()));
+            });
+
             LOGGER.info("WorkerStatistic cache reloaded");
         } catch (Throwable t) {
             LOGGER.error("Unable reload WorkerStatistic cache", t);

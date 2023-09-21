@@ -275,17 +275,19 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
                                         AVG(m.sharespersecond)       AS average_sharespersecond
                                  FROM minerstats m
                                  WHERE m.poolid = ?
+                                   AND m.created > ?
                                    AND m.worker IN (
                                      SELECT s.worker || '.' || s.device
                                      FROM shares_statistic s
-                                     WHERE s.worker = ?
-                                 ) AND m.created >= ?
+                                     WHERE s.worker = ? AND s.created > ?
+                                 ) 
                                  GROUP BY date_trunc('day', m.created), m.worker
                              ) AS subquery
                         GROUP BY date
                         ORDER BY date DESC""",
                 WORKER_HASH_RATE_STATISTIC_ROW_MAPPER,
                 poolId,
+                fromDate,
                 workerName,
                 fromDate);
     }
