@@ -8,6 +8,7 @@ import com.itrailmpool.itrailmpoolviewer.dal.entity.WorkerEntity;
 import com.itrailmpool.itrailmpoolviewer.mapper.DeviceStatisticMapper;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.collections4.MapUtils;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -48,7 +49,7 @@ public class DeviceStatisticRepositoryImpl implements DeviceStatisticRepository 
     private final DeviceStatisticMapper deviceStatisticMapper;
     private final DeviceRepository deviceRepository;
     private final WorkerRepository workerRepository;
-    @Value("${app.pool.statistic.device.online.check.interval:90}")
+    @Value("${app.pool.statistic.device.online.check.interval:600}")
     private Integer deviceOnlineCheckInterval;
     private volatile Map<String, List<String>> devicesNamesByWorker = new HashMap<>();
 
@@ -148,6 +149,8 @@ public class DeviceStatisticRepositoryImpl implements DeviceStatisticRepository 
         Set<String> workerDevicesNames = new HashSet<>();
         workerDevicesNames.addAll(devicesNames);
         workerDevicesNames.addAll(devicesFromSharesStatistic);
+
+        LOGGER.info("Worker's {} devices: [{}]", workerName, StringUtils.join(workerDevicesNames, ", "));
 
         return new ArrayList<>(workerDevicesNames);
     }
