@@ -9,6 +9,7 @@ import com.itrailmpool.itrailmpoolviewer.client.model.PoolInfo;
 import com.itrailmpool.itrailmpoolviewer.client.model.PoolStatisticResponse;
 import com.itrailmpool.itrailmpoolviewer.client.model.WorkerPerformanceStatsContainer;
 import com.itrailmpool.itrailmpoolviewer.dal.repository.DeviceStatisticRepository;
+import com.itrailmpool.itrailmpoolviewer.exception.MiningPoolViewerException;
 import com.itrailmpool.itrailmpoolviewer.mapper.MiningcoreClientMapper;
 import com.itrailmpool.itrailmpoolviewer.model.BlockDto;
 import com.itrailmpool.itrailmpoolviewer.model.MinerPerformanceStatsDto;
@@ -32,56 +33,88 @@ public class PoolStatisticServiceImpl implements PoolStatisticService {
 
     @Override
     public PoolContainerDto getPools() {
-        var pools = miningcoreClient.getPools();
-        pools.getPools().forEach(this::updateConnectedMiners);
+        try {
+            var pools = miningcoreClient.getPools();
+            pools.getPools().forEach(this::updateConnectedMiners);
 
-        return miningcoreClientMapper.toPoolResponseDto(pools);
+            return miningcoreClientMapper.toPoolResponseDto(pools);
+        } catch (Throwable t) {
+            throw new MiningPoolViewerException(t);
+        }
     }
 
     @Override
     public PoolStatisticContainerDto getPoolPerformance(String poolId) {
-        PoolStatisticResponse poolPerformance = miningcoreClient.getPoolPerformance(poolId);
+        try {
+            PoolStatisticResponse poolPerformance = miningcoreClient.getPoolPerformance(poolId);
 
-        return miningcoreClientMapper.toPoolStatisticContainerDto(poolPerformance);
+            return miningcoreClientMapper.toPoolStatisticContainerDto(poolPerformance);
+        } catch (Throwable t) {
+            throw new MiningPoolViewerException(t);
+        }
     }
 
     @Override
     public List<BlockDto> getBlocks(String poolId, int page, int size) {
-        List<Block> blocks = miningcoreClient.getBlocks(poolId, page, size);
+        try {
+            List<Block> blocks = miningcoreClient.getBlocks(poolId, page, size);
 
-        return miningcoreClientMapper.toBlockDto(blocks);
+            return miningcoreClientMapper.toBlockDto(blocks);
+        } catch (Throwable t) {
+            throw new MiningPoolViewerException(t);
+        }
     }
 
     @Override
     public List<PaymentDto> getPayments(String poolId, int page, int size) {
-        List<Payment> payments = miningcoreClient.getPayments(poolId, page, size);
+        try {
+            List<Payment> payments = miningcoreClient.getPayments(poolId, page, size);
 
-        return miningcoreClientMapper.toPaymentDto(payments);
+            return miningcoreClientMapper.toPaymentDto(payments);
+        } catch (Throwable t) {
+            throw new MiningPoolViewerException(t);
+        }
     }
 
     @Override
     public MinerStatisticDto getMinerStatistic(String poolId, String address) {
-        MinerStatisticResponse minerStatistic = miningcoreClient.getMinerStatistic(poolId, address);
+        try {
+            MinerStatisticResponse minerStatistic = miningcoreClient.getMinerStatistic(poolId, address);
 
-        return miningcoreClientMapper.toMinerStatisticDto(minerStatistic);
+            return miningcoreClientMapper.toMinerStatisticDto(minerStatistic);
+        } catch (Throwable t) {
+            throw new MiningPoolViewerException(t);
+        }
     }
 
     @Override
     public List<WorkerPerformanceStatsContainerDto> getMinerPerformance(String poolId, String address) {
-        List<WorkerPerformanceStatsContainer> minerPerformance = miningcoreClient.getMinerPerformance(poolId, address);
+        try {
+            List<WorkerPerformanceStatsContainer> minerPerformance = miningcoreClient.getMinerPerformance(poolId, address);
 
-        return miningcoreClientMapper.toWorkerPerformanceStatsContainerDto(minerPerformance);
+            return miningcoreClientMapper.toWorkerPerformanceStatsContainerDto(minerPerformance);
+        } catch (Throwable t) {
+            throw new MiningPoolViewerException(t);
+        }
     }
 
     @Override
     public List<MinerPerformanceStatsDto> getMiners(String poolId, int page, int size) {
-        List<MinerPerformanceStats> miners = miningcoreClient.getMiners(poolId, page, size);
+        try {
+            List<MinerPerformanceStats> miners = miningcoreClient.getMiners(poolId, page, size);
 
-        return miningcoreClientMapper.toMinerPerformanceStatsDto(miners);
+            return miningcoreClientMapper.toMinerPerformanceStatsDto(miners);
+        } catch (Throwable t) {
+            throw new MiningPoolViewerException(t);
+        }
     }
 
     private void updateConnectedMiners(PoolInfo pool) {
-        Integer activeWorkersCount = deviceStatisticRepository.getActiveWorkersCount(pool.getId());
-        pool.getPoolStats().setConnectedMiners(activeWorkersCount);
+        try {
+            Integer activeWorkersCount = deviceStatisticRepository.getActiveWorkersCount(pool.getId());
+            pool.getPoolStats().setConnectedMiners(activeWorkersCount);
+        } catch (Throwable t) {
+            throw new MiningPoolViewerException(t);
+        }
     }
 }
