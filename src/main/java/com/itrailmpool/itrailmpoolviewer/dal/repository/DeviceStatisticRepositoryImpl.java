@@ -18,6 +18,7 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.sql.Timestamp;
 import java.time.Instant;
@@ -53,6 +54,7 @@ public class DeviceStatisticRepositoryImpl implements DeviceStatisticRepository 
     private final DeviceStatisticMapper deviceStatisticMapper;
     private final DeviceRepository deviceRepository;
     private final WorkerRepository workerRepository;
+    private final TransactionTemplate transactionTemplate;
     @Value("${app.pool.statistic.device.online.check.interval:600}")
     private Integer deviceOnlineCheckInterval;
     private volatile Map<String, List<String>> devicesNamesByWorker = new HashMap<>();
@@ -106,7 +108,7 @@ public class DeviceStatisticRepositoryImpl implements DeviceStatisticRepository 
                 DEVICE_ENTITY_ROW_MAPPER);
     }
 
-    @Scheduled(initialDelay = 1, fixedDelay = 15, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(initialDelay = 1, fixedDelay = 30, timeUnit = TimeUnit.MINUTES)
     public void reloadWorkerDevicesNames() {
         Instant dateFrom = Instant.now().minus(1, ChronoUnit.DAYS);
         DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DEFAULT_DATA_FORMAT_PATTERN);
@@ -114,12 +116,14 @@ public class DeviceStatisticRepositoryImpl implements DeviceStatisticRepository 
 
         LOGGER.info("WorkerDevicesNames cache reloading from {}", formatter.format(zdt));
         try {
-            Map<String, List<String>> initDevicesNamesByWorkerMap = new HashMap<>();
-            workerRepository.findAll().forEach(worker ->
-                    initDevicesNamesByWorkerMap.put(
-                            buildPoolWorkerKey(worker.getPoolId(), worker.getName()),
-                            findWorkerDevicesNames(worker.getName(), worker.getPoolId(), dateFrom)));
-            devicesNamesByWorker = initDevicesNamesByWorkerMap;
+            transactionTemplate.executeWithoutResult(status -> {
+                Map<String, List<String>> initDevicesNamesByWorkerMap = new HashMap<>();
+                workerRepository.findAll().forEach(worker ->
+                        initDevicesNamesByWorkerMap.put(
+                                buildPoolWorkerKey(worker.getPoolId(), worker.getName()),
+                                findWorkerDevicesNames(worker.getName(), worker.getPoolId(), dateFrom)));
+                devicesNamesByWorker = initDevicesNamesByWorkerMap;
+            });
         } catch (Throwable e) {
             LOGGER.error("Unable to reload worker devices names", e);
         }

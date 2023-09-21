@@ -9,6 +9,7 @@ import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.LocalDate;
 import java.util.List;
@@ -20,6 +21,7 @@ public class WorkerStatisticUpdateJob {
 
     private final MinerSettingsRepository minerSettingsRepository;
     private final WorkerStatisticRepository workerStatisticRepository;
+    private final TransactionTemplate transactionTemplate;
 
     @Scheduled(cron = "0 0 4 * * ?")
     private void saveWorkersDailyStatistic() {
@@ -27,8 +29,10 @@ public class WorkerStatisticUpdateJob {
 
         LocalDate lastWorkerDailyStatisticDate = workerStatisticRepository.getLastWorkerDailyStatisticDate();
 
-        minerSettingsRepository.findAll()
-                .forEach(minerSettings -> this.updateWorkerStatisticData(minerSettings, lastWorkerDailyStatisticDate));
+        transactionTemplate.executeWithoutResult(status -> {
+            minerSettingsRepository.findAll()
+                    .forEach(minerSettings -> this.updateWorkerStatisticData(minerSettings, lastWorkerDailyStatisticDate));
+        });
 
         LOGGER.info("Workers daily statistic saved");
     }

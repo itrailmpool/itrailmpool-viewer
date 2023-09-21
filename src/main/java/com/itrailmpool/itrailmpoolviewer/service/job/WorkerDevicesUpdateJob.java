@@ -10,6 +10,7 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.support.TransactionTemplate;
 
 import java.time.Instant;
 import java.time.ZoneId;
@@ -33,14 +34,16 @@ public class WorkerDevicesUpdateJob {
     private final WorkerRepository workerRepository;
     private final DeviceRepository deviceRepository;
     private final DeviceStatisticRepository deviceStatisticRepository;
-
+    private final TransactionTemplate transactionTemplate;
 
     @Scheduled(cron = "0 0 2 * * ?")
     private void saveWorkerDevices() {
         LOGGER.info("Worker's new devices saving");
 
-        workerRepository.findAll()
-                .forEach(this::updateDevicesData);
+        transactionTemplate.executeWithoutResult(status -> {
+            workerRepository.findAll()
+                    .forEach(this::updateDevicesData);
+        });
 
         LOGGER.info("Worker's new devices saved");
     }
