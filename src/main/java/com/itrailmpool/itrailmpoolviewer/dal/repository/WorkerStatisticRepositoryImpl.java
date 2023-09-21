@@ -151,7 +151,7 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
                                     SELECT w.name || '.' || d.name
                                     FROM devices d
                                     INNER JOIN workers w ON d.worker_id = w.id
-                                    WHERE w.name = :workerName
+                                    WHERE w.name = :worker
                                 )
                                 GROUP BY ms.worker) as subquery;""",
                     parameters,
