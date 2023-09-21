@@ -88,7 +88,6 @@ public class DeviceStatisticRepositoryImpl implements DeviceStatisticRepository 
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         parameters.addValue("worker", workerName);
         parameters.addValue("poolid", poolId);
-        parameters.addValue("created", Timestamp.from(dateFrom));
 
         return namedParameterJdbcTemplate.query("""
                         SELECT CASE WHEN s.device IS NULL THEN '' ELSE s.device END AS name,
@@ -98,10 +97,10 @@ public class DeviceStatisticRepositoryImpl implements DeviceStatisticRepository 
                                now()                                                AS modification_date,
                                true                                                 AS is_enabled
                         FROM shares_statistic s
-                        INNER JOIN workers w ON s.worker = w.name
-                        WHERE s.worker = (:worker)
-                             AND s.created >= (:created)
-                             AND s.poolid = (:poolid)
+                                 INNER JOIN workers w ON s.worker = w.name
+                        WHERE s.worker = :worker
+                          AND s.created >= now() - interval '1 day'
+                          AND s.poolid = :poolId
                         GROUP BY s.device, w.id""",
                 parameters,
                 DEVICE_ENTITY_ROW_MAPPER);
