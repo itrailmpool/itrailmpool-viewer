@@ -10,6 +10,7 @@ import com.itrailmpool.itrailmpoolviewer.dal.entity.WorkerStatisticEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.repository.DeviceStatisticRepository;
 import com.itrailmpool.itrailmpoolviewer.dal.repository.MinerSettingsRepository;
 import com.itrailmpool.itrailmpoolviewer.dal.repository.WorkerStatisticRepository;
+import com.itrailmpool.itrailmpoolviewer.exception.MiningPoolViewerException;
 import com.itrailmpool.itrailmpoolviewer.mapper.DeviceStatisticMapper;
 import com.itrailmpool.itrailmpoolviewer.mapper.MiningcoreClientMapper;
 import com.itrailmpool.itrailmpoolviewer.mapper.WorkerStatisticMapper;
@@ -57,37 +58,49 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
 
     @Override
     public WorkerStatisticContainerDto getWorkerStatistic(String poolId, String workerName) {
-        if (schedulingConfig.isCacheEnabled()) {
-            LOGGER.debug("Scheduling is enable. Get worker statistic from cache");
+        try {
+            if (schedulingConfig.isCacheEnabled()) {
+                LOGGER.debug("Scheduling is enable. Get worker statistic from cache");
 
-            return workerStatisticByWorker.get(buildPoolWorkerKey(poolId, workerName));
+                return workerStatisticByWorker.get(buildPoolWorkerKey(poolId, workerName));
+            }
+
+            LOGGER.debug("Scheduling is disable. Get worker statistic from database");
+
+            return getWorkerStatisticData(poolId, workerName);
+        } catch (Throwable t) {
+            throw new MiningPoolViewerException(t);
         }
-
-        LOGGER.debug("Scheduling is disable. Get worker statistic from database");
-
-        return getWorkerStatisticData(poolId, workerName);
     }
 
     @Override
     public List<WorkerPerformanceStatsContainerDto> getWorkerPerformance(String poolId, String workerName) {
-        MinerSettingsEntity minerSettings = minerSettingsRepository.findByPoolIdAndWorkerName(poolId, workerName);
-        if (minerSettings == null) {
-            return Collections.emptyList();
+        try {
+            MinerSettingsEntity minerSettings = minerSettingsRepository.findByPoolIdAndWorkerName(poolId, workerName);
+            if (minerSettings == null) {
+                return Collections.emptyList();
+            }
+
+            List<WorkerPerformanceStatsContainer> minerPerformance = miningcoreClient.getMinerPerformance(poolId, minerSettings.getAddress());
+
+            return miningcoreClientMapper.toWorkerPerformanceStatsContainerDto(minerPerformance);
+        } catch (Throwable t) {
+            throw new MiningPoolViewerException(t);
         }
-
-        List<WorkerPerformanceStatsContainer> minerPerformance = miningcoreClient.getMinerPerformance(poolId, minerSettings.getAddress());
-
-        return miningcoreClientMapper.toWorkerPerformanceStatsContainerDto(minerPerformance);
     }
 
     @Scheduled(initialDelay = 60, fixedDelay = 60, timeUnit = TimeUnit.SECONDS)
     private void reload() {
-        LOGGER.info("WorkerStatistic cache reloading");
-        workerStatisticByWorker = minerSettingsRepository.findAll().stream()
-                .map(this::getWorkerStatisticData)
-                .collect(Collectors.toMap(workerStatistic ->
-                        buildPoolWorkerKey(workerStatistic.getPoolId(), workerStatistic.getWorkerName()), Function.identity()));
-        LOGGER.info("WorkerStatistic cache reloaded");
+        try {
+            LOGGER.info("WorkerStatistic cache reloading");
+            workerStatisticByWorker = minerSettingsRepository.findAll().stream()
+                    .map(this::getWorkerStatisticData)
+                    .collect(Collectors.toMap(workerStatistic ->
+                            buildPoolWorkerKey(workerStatistic.getPoolId(), workerStatistic.getWorkerName()), Function.identity()));
+            LOGGER.info("WorkerStatistic cache reloaded");
+        } catch (Throwable t) {
+            LOGGER.error("Unable reload WorkerStatistic cache", t);
+        }
     }
 
     private WorkerStatisticContainerDto getWorkerStatisticData(MinerSettingsEntity minerSettings) {
@@ -96,13 +109,14 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
         LOGGER.info("Worker {} statistic cache reloaded", minerSettings.getWorkerName());
 
         return workerStatisticData;
+
     }
 
     private WorkerStatisticContainerDto getWorkerStatisticData(String poolId, String workerName) {
         List<DeviceStatisticEntity> devicesStatistic = deviceStatisticRepository.getWorkerDevicesStatistic(poolId, workerName);
         WorkerHashRateEntity workerHashRateEntity = workerStatisticRepository.getWorkerHashRate(poolId, workerName);
 
-        List<WorkerStatisticEntity> workerStatistic  = workerStatisticRepository.getWorkerStatistic(poolId, workerName).stream()
+        List<WorkerStatisticEntity> workerStatistic = workerStatisticRepository.getWorkerStatistic(poolId, workerName).stream()
                 .sorted(Comparator.comparing(WorkerStatisticEntity::getDate).reversed())
                 .toList();
 

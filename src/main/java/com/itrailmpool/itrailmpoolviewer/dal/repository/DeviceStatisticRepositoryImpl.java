@@ -150,7 +150,7 @@ public class DeviceStatisticRepositoryImpl implements DeviceStatisticRepository 
         workerDevicesNames.addAll(devicesNames);
         workerDevicesNames.addAll(devicesFromSharesStatistic);
 
-        LOGGER.info("Worker's {} devices: [{}]", workerName, StringUtils.join(workerDevicesNames, ", "));
+        LOGGER.debug("Worker's {} devices: [{}]", workerName, StringUtils.join(workerDevicesNames, ", "));
 
         return new ArrayList<>(workerDevicesNames);
     }

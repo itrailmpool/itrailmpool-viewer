@@ -12,13 +12,17 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
+
+import static com.itrailmpool.itrailmpoolviewer.config.ApplicationConfig.DEFAULT_DATA_FORMAT_PATTERN;
 
 @Service
 @RequiredArgsConstructor
@@ -44,6 +48,11 @@ public class WorkerDevicesUpdateJob {
     private void updateDevicesData(WorkerEntity worker) {
         try {
             Instant fromDate = Instant.now().minus(1, ChronoUnit.DAYS);
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DEFAULT_DATA_FORMAT_PATTERN);
+            ZonedDateTime zdt = fromDate.atZone(ZoneId.systemDefault());
+
+            LOGGER.info("PoolId {}. Aggregate worker {} devices connected from {}", worker.getPoolId(), worker.getName(), formatter.format(zdt));
+
             updateDevicesData(worker, fromDate);
         } catch (Throwable e) {
             LOGGER.error("Update device exception: {}", e.getMessage(), e);
