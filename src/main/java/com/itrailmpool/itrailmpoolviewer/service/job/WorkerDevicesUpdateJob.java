@@ -35,7 +35,7 @@ public class WorkerDevicesUpdateJob {
     private final DeviceStatisticRepository deviceStatisticRepository;
 
 
-    @Scheduled(cron = "0 0 1 * * ?")
+    @Scheduled(cron = "0 0 2 * * ?")
     private void saveWorkerDevices() {
         LOGGER.info("Worker's new devices saving");
 

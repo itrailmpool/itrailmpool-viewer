@@ -21,7 +21,7 @@ public class WorkerStatisticUpdateJob {
     private final MinerSettingsRepository minerSettingsRepository;
     private final WorkerStatisticRepository workerStatisticRepository;
 
-    @Scheduled(cron = "0 0 2 * * ?")
+    @Scheduled(cron = "0 0 4 * * ?")
     private void saveWorkersDailyStatistic() {
         LOGGER.info("Saving workers daily statistic");
 
