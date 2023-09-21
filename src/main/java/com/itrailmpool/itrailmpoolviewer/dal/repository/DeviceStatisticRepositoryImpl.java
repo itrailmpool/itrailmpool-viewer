@@ -95,8 +95,8 @@ public class DeviceStatisticRepositoryImpl implements DeviceStatisticRepository 
                         FROM shares_statistic s
                         INNER JOIN workers w ON s.worker = w.name
                         WHERE s.worker = (:worker)
-                             AND s.poolid = (:poolid)
                              AND s.created >= (:created)
+                             AND s.poolid = (:poolid)
                         GROUP BY s.device, w.id""",
                 parameters,
                 DEVICE_ENTITY_ROW_MAPPER);
@@ -105,15 +105,17 @@ public class DeviceStatisticRepositoryImpl implements DeviceStatisticRepository 
     @Scheduled(initialDelay = 1, fixedDelay = 15, timeUnit = TimeUnit.MINUTES)
     public void reloadWorkerDevicesNames() {
         LOGGER.info("WorkerDevicesNames cache reloading");
-
-        Map<String, List<String>> initDevicesNamesByWorkerMap = new HashMap<>();
-        Instant dateFrom = Instant.now().minus(1, ChronoUnit.DAYS);
-        workerRepository.findAll().forEach(worker ->
-                initDevicesNamesByWorkerMap.put(
-                        buildPoolWorkerKey(worker.getPoolId(), worker.getName()),
-                        findWorkerDevicesNames(worker.getName(), worker.getPoolId(), dateFrom)));
-        devicesNamesByWorker = initDevicesNamesByWorkerMap;
-
+        try {
+            Map<String, List<String>> initDevicesNamesByWorkerMap = new HashMap<>();
+            Instant dateFrom = Instant.now().minus(1, ChronoUnit.DAYS);
+            workerRepository.findAll().forEach(worker ->
+                    initDevicesNamesByWorkerMap.put(
+                            buildPoolWorkerKey(worker.getPoolId(), worker.getName()),
+                            findWorkerDevicesNames(worker.getName(), worker.getPoolId(), dateFrom)));
+            devicesNamesByWorker = initDevicesNamesByWorkerMap;
+        } catch (Throwable e) {
+            LOGGER.error("Unable to reload worker devices names", e);
+        }
         LOGGER.info("WorkerDevicesNames cache reloaded");
     }
 
@@ -156,7 +158,7 @@ public class DeviceStatisticRepositoryImpl implements DeviceStatisticRepository 
         List<String> workerDevicesNames = findWorkerDevicesNames(workerName, poolId);
         WorkerEntity worker = workerRepository.findByNameAndPoolId(workerName, poolId);
 
-        if (worker == null) {
+        if (worker == null || workerDevicesNames.isEmpty()) {
             return Collections.emptyList();
         }
 
@@ -202,7 +204,7 @@ public class DeviceStatisticRepositoryImpl implements DeviceStatisticRepository 
             return false;
         }
 
-        return lastValidShareDate.isBefore(Instant.now().minus(deviceOnlineCheckInterval, ChronoUnit.SECONDS));
+        return lastValidShareDate.isAfter(Instant.now().minus(deviceOnlineCheckInterval, ChronoUnit.SECONDS));
     }
 
 

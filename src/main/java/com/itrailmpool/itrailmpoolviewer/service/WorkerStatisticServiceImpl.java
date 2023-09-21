@@ -91,7 +91,11 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
     }
 
     private WorkerStatisticContainerDto getWorkerStatisticData(MinerSettingsEntity minerSettings) {
-        return getWorkerStatisticData(minerSettings.getPoolId(), minerSettings.getWorkerName());
+        LOGGER.info("Worker {} statistic cache reloading", minerSettings.getWorkerName());
+        WorkerStatisticContainerDto workerStatisticData = getWorkerStatisticData(minerSettings.getPoolId(), minerSettings.getWorkerName());
+        LOGGER.info("Worker {} statistic cache reloaded", minerSettings.getWorkerName());
+
+        return workerStatisticData;
     }
 
     private WorkerStatisticContainerDto getWorkerStatisticData(String poolId, String workerName) {
