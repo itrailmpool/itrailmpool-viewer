@@ -260,9 +260,9 @@ public class DeviceStatisticRepositoryImpl implements DeviceStatisticRepository 
         return namedParameterJdbcTemplate.query("""
                         SELECT split_part(ms.worker, '.', 1) AS worker,
                                split_part(ms.worker, '.', 2) AS device,
-                               (SELECT avg(hashrate) FROM minerstats WHERE worker = ms.worker AND created >= NOW() - make_interval(secs => :deviceOnlineCheckInterval)) AS current_hashrate,
-                               (SELECT avg(hashrate) FROM minerstats WHERE worker = ms.worker AND created >= NOW() - interval '1 hour')                                 AS average_hashrate_hour,
-                               (SELECT avg(hashrate) FROM minerstats WHERE worker = ms.worker AND created >= NOW() - interval '1 day')                                  AS average_hashrate_day
+                               (SELECT avg(hashrate) FROM minerstats WHERE poolid = (:poolid) AND worker = ms.worker AND created >= NOW() - make_interval(secs => :deviceOnlineCheckInterval)) AS current_hashrate,
+                               (SELECT avg(hashrate) FROM minerstats WHERE poolid = (:poolid) AND worker = ms.worker AND created >= NOW() - interval '1 hour')                                 AS average_hashrate_hour,
+                               (SELECT avg(hashrate) FROM minerstats WHERE poolid = (:poolid) AND worker = ms.worker AND created >= NOW() - interval '1 day')                                  AS average_hashrate_day
                         FROM minerstats ms
                         WHERE poolid = (:poolid)
                             AND ms.created >= NOW() - interval '1 day'

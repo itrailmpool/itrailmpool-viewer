@@ -16,6 +16,8 @@ import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.BatchPreparedStatementSetter;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.sql.PreparedStatement;
@@ -35,6 +37,7 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
     private static final RowMapper<WorkerStatisticEntity> WORKER_STATISTIC_ROW_MAPPER = getWorkerStatisticRowMapper();
 
     private final JdbcTemplate jdbcTemplate;
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
     private final WorkerStatisticMapper workerStatisticMapper;
     @Value("${app.pool.statistic.worker.online.check.interval:600}")
     private Integer workerOnlineCheckInterval;
@@ -128,27 +131,31 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
     @Override
     public WorkerHashRateEntity getWorkerHashRate(String poolId, String workerName) {
         try {
-            return jdbcTemplate.queryForObject("""
+            MapSqlParameterSource parameters = new MapSqlParameterSource();
+            parameters.addValue("workerOnlineCheckInterval", workerOnlineCheckInterval);
+            parameters.addValue("poolId", poolId);
+            parameters.addValue("worker", workerName);
+
+            return namedParameterJdbcTemplate.queryForObject("""
                             SELECT sum(current_hashrate)      AS current_hashrate,
                                    sum(average_hashrate_hour) AS average_hashrate_hour,
                                    sum(average_hashrate_day)  AS average_hashrate_day
                             FROM
-                                (SELECT (SELECT avg(hashrate) FROM minerstats WHERE worker = ms.worker AND created >= NOW() - make_interval(secs => ?)) AS current_hashrate,
-                                        (SELECT avg(hashrate) FROM minerstats WHERE worker = ms.worker AND created >= NOW() - interval '1 hour')        AS average_hashrate_hour,
-                                        (SELECT avg(hashrate) FROM minerstats WHERE worker = ms.worker AND created >= NOW() - interval '1 day')         AS average_hashrate_day
+                                (SELECT (SELECT avg(hashrate) FROM minerstats WHERE poolid = :poolId AND worker = ms.worker AND created >= NOW() - make_interval(secs => :workerOnlineCheckInterval)) AS current_hashrate,
+                                        (SELECT avg(hashrate) FROM minerstats WHERE poolid = :poolId AND worker = ms.worker AND created >= NOW() - interval '1 hour')                                 AS average_hashrate_hour,
+                                        (SELECT avg(hashrate) FROM minerstats WHERE poolid = :poolId AND worker = ms.worker AND created >= NOW() - interval '1 day')                                  AS average_hashrate_day
                                     FROM minerstats ms
-                                    WHERE poolid = ?
+                                    WHERE poolid = :poolId
                                       AND ms.created >= NOW() - interval '1 day'
                                   AND ms.worker IN (
-                                        SELECT s.worker || '.' || s.device
-                                        FROM shares_statistic s
-                                        WHERE s.worker = ?
+                                    SELECT w.name || '.' || d.name
+                                    FROM devices d
+                                    INNER JOIN workers w ON d.worker_id = w.id
+                                    WHERE w.name = :workerName
                                 )
                                 GROUP BY ms.worker) as subquery;""",
-                    WORKER_HASH_RATE_ROW_MAPPER,
-                    workerOnlineCheckInterval,
-                    poolId,
-                    workerName);
+                    parameters,
+                    WORKER_HASH_RATE_ROW_MAPPER);
         } catch (EmptyResultDataAccessException e) {
             LOGGER.debug("WorkerHashRate for poolId {} and workerName {} not found", poolId, workerName);
         }
