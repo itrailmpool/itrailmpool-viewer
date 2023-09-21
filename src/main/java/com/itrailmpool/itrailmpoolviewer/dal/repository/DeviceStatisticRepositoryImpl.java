@@ -21,6 +21,9 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.Timestamp;
 import java.time.Instant;
+import java.time.ZoneId;
+import java.time.ZonedDateTime;
+import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,6 +36,7 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static com.itrailmpool.itrailmpoolviewer.config.ApplicationConfig.DEFAULT_DATA_FORMAT_PATTERN;
 import static com.itrailmpool.itrailmpoolviewer.dal.repository.DeviceRepositoryImpl.DEVICE_ENTITY_ROW_MAPPER;
 import static com.itrailmpool.itrailmpoolviewer.service.WorkerStatisticServiceImpl.buildPoolWorkerKey;
 
@@ -105,10 +109,13 @@ public class DeviceStatisticRepositoryImpl implements DeviceStatisticRepository 
 
     @Scheduled(initialDelay = 1, fixedDelay = 15, timeUnit = TimeUnit.MINUTES)
     public void reloadWorkerDevicesNames() {
-        LOGGER.info("WorkerDevicesNames cache reloading");
+        Instant dateFrom = Instant.now().minus(1, ChronoUnit.DAYS);
+        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DEFAULT_DATA_FORMAT_PATTERN);
+        ZonedDateTime zdt = dateFrom.atZone(ZoneId.systemDefault());
+
+        LOGGER.info("WorkerDevicesNames cache reloading from {}", formatter.format(zdt));
         try {
             Map<String, List<String>> initDevicesNamesByWorkerMap = new HashMap<>();
-            Instant dateFrom = Instant.now().minus(1, ChronoUnit.DAYS);
             workerRepository.findAll().forEach(worker ->
                     initDevicesNamesByWorkerMap.put(
                             buildPoolWorkerKey(worker.getPoolId(), worker.getName()),
@@ -127,6 +134,10 @@ public class DeviceStatisticRepositoryImpl implements DeviceStatisticRepository 
             return devicesNamesByWorker.get(poolWorkerKey);
         } else {
             Instant dateFrom = Instant.now().minus(1, ChronoUnit.DAYS);
+            DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DEFAULT_DATA_FORMAT_PATTERN);
+            ZonedDateTime zdt = dateFrom.atZone(ZoneId.systemDefault());
+
+            LOGGER.info("findWorkerDevicesNames from {}", formatter.format(zdt));
 
             return findWorkerDevicesNames(workerName, poolId, dateFrom);
         }
