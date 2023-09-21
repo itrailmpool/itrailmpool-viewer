@@ -36,7 +36,7 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
 
     private final JdbcTemplate jdbcTemplate;
     private final WorkerStatisticMapper workerStatisticMapper;
-    @Value("${app.pool.statistic.worker.online.check.interval:90}")
+    @Value("${app.pool.statistic.worker.online.check.interval:600}")
     private Integer workerOnlineCheckInterval;
     @Value("${app.pool.statistic.worker.statistic.max_period:3}")
     private Integer workerDailyStatisticMaxPeriod;
