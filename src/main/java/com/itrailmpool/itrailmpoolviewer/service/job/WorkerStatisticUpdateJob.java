@@ -35,7 +35,6 @@ public class WorkerStatisticUpdateJob {
 
     private void updateWorkerStatisticData(MinerSettingsEntity minerSettings, LocalDate dateFrom) {
         try {
-            LOGGER.debug("Workers {} statistic updating", minerSettings.getWorkerName());
             updateWorkerStatisticData(minerSettings.getPoolId(), minerSettings.getWorkerName(), dateFrom);
         } catch (Throwable e) {
             LOGGER.error("Unable to update worker statistic: {}", e.getMessage(), e);
