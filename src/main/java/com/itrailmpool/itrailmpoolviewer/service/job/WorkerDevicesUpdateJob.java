@@ -20,6 +20,7 @@ import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.Map;
+import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
@@ -40,10 +41,18 @@ public class WorkerDevicesUpdateJob {
     private void saveWorkerDevices() {
         LOGGER.info("Worker's new devices saving");
 
-        transactionTemplate.executeWithoutResult(status -> {
-            workerRepository.findAll()
-                    .forEach(this::updateDevicesData);
-        });
+        transactionTemplate.executeWithoutResult(status -> workerRepository.findAll()
+                .forEach(this::updateDevicesData));
+
+        LOGGER.info("Worker's new devices saved");
+    }
+
+    @Scheduled(initialDelay = 5, fixedDelay = 43200, timeUnit = TimeUnit.MINUTES)
+    private void saveWorkerDevicesInit() {
+        LOGGER.info("Worker's new devices saving");
+
+        transactionTemplate.executeWithoutResult(status -> workerRepository.findAll()
+                .forEach(this::updateDevicesData));
 
         LOGGER.info("Worker's new devices saved");
     }
