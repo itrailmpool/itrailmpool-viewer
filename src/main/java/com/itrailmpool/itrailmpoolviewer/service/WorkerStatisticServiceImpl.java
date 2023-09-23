@@ -53,10 +53,10 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
 
     private volatile Map<String, WorkerStatisticContainerDto> workerStatisticByWorker = new HashMap<>();
 
-    @PostConstruct
-    void init() {
-        reload();
-    }
+//    @PostConstruct
+//    void init() {
+//        reload();
+//    }
 
     @Override
     public WorkerStatisticContainerDto getWorkerStatistic(String poolId, String workerName) {
