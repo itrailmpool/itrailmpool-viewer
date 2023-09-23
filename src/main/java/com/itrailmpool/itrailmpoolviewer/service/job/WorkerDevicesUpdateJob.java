@@ -65,7 +65,10 @@ public class WorkerDevicesUpdateJob {
     private void updateDevicesData(WorkerEntity worker, Instant dateFrom) {
         Map<String, DeviceEntity> savedDevices = deviceRepository.findByWorkerId(worker.getId()).stream()
                 .collect(Collectors.toMap(DeviceEntity::getName, Function.identity()));
-        List<DeviceEntity> devicesFromShareStatistic = deviceStatisticRepository.findDevicesFromShareStatistic(worker.getName(), worker.getPoolId(), dateFrom);
+        List<DeviceEntity> devicesFromShareStatistic =
+                deviceStatisticRepository.findDevicesFromShareStatistic(worker.getName(), worker.getPoolId(), dateFrom).stream()
+                .distinct()
+                .toList();
 
         List<DeviceEntity> deviceForUpdate = new ArrayList<>(devicesFromShareStatistic.size());
         List<DeviceEntity> newDevices = new ArrayList<>();
