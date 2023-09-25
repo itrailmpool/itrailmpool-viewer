@@ -257,41 +257,44 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
     }
 
     private List<WorkerShareStatisticEntity> getWorkerShareStatistics(String poolId, String workerName, LocalDate fromDate) {
+        MapSqlParameterSource parameters = new MapSqlParameterSource();
+        parameters.addValue("poolId", poolId);
+        parameters.addValue("workerName", workerName);
+
         if (fromDate == null) {
-            return jdbcTemplate.query("""
+            return namedParameterJdbcTemplate.query("""
                             SELECT worker,
                                    poolid,
                                    date_trunc('day', created)                   AS date,               
                                    sum(CASE WHEN isvalid THEN 1 ELSE 0 END)     AS total_valid_shares,
                                    sum(CASE WHEN NOT isvalid THEN 1 ELSE 0 END) AS total_invalid_shares
                             FROM shares_statistic
-                            WHERE 
-                                worker = ? AND 
-                                poolid = ?
+                            WHERE worker = :workerName AND 
+                                  poolid = :poolId
                             GROUP BY date_trunc('day', created), worker, poolid
-                            ORDER BY date DESC""",
-                    WORKER_SHARE_STATISTIC_ROW_MAPPER,
-                    workerName,
-                    poolId);
+                            ORDER BY date DESC;""",
+                    parameters,
+                    WORKER_SHARE_STATISTIC_ROW_MAPPER);
         }
 
-        return jdbcTemplate.query("""
+        parameters.addValue("fromDate", fromDate);
+        LOGGER.debug("Get share statistic from date [{}]. PoolId [{}], worker [{}]", fromDate, poolId, workerName);
+
+        return namedParameterJdbcTemplate.query("""
                         SELECT worker,
-                               poolid,
-                               date_trunc('day', created)                   AS date,               
-                               sum(CASE WHEN isvalid THEN 1 ELSE 0 END)     AS total_valid_shares,
-                               sum(CASE WHEN NOT isvalid THEN 1 ELSE 0 END) AS total_invalid_shares
-                        FROM shares_statistic
-                        WHERE 
-                            worker = ? AND 
-                            date_trunc('day', created) > ? AND 
-                            poolid = ?
-                        GROUP BY date_trunc('day', created), worker, poolid
-                        ORDER BY date DESC""",
-                WORKER_SHARE_STATISTIC_ROW_MAPPER,
-                workerName,
-                poolId,
-                fromDate);
+                                poolid,
+                                date_trunc('day', created)                   AS date,               
+                                sum(CASE WHEN isvalid THEN 1 ELSE 0 END)     AS total_valid_shares,
+                                sum(CASE WHEN NOT isvalid THEN 1 ELSE 0 END) AS total_invalid_shares
+                         FROM shares_statistic
+                         WHERE 
+                             worker = :workerName AND 
+                             date_trunc('day', created) > :fromDate AND 
+                             poolid = :poolId
+                         GROUP BY date_trunc('day', created), worker, poolid
+                         ORDER BY date DESC""",
+                parameters,
+                WORKER_SHARE_STATISTIC_ROW_MAPPER);
     }
 
     @Override
