@@ -37,7 +37,7 @@ public class WorkerDevicesUpdateJob {
     private final DeviceStatisticRepository deviceStatisticRepository;
     private final TransactionTemplate transactionTemplate;
 
-    @Scheduled(initialDelay = 5, fixedDelay = 20, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(initialDelay = 15, fixedDelay = 15, timeUnit = TimeUnit.MINUTES)
     private void saveWorkerDevicesInit() {
         LOGGER.info("Worker's new devices saving");
 
@@ -65,7 +65,7 @@ public class WorkerDevicesUpdateJob {
         Map<String, DeviceEntity> savedDevices = deviceRepository.findByWorkerId(worker.getId()).stream()
                 .collect(Collectors.toMap(DeviceEntity::getName, Function.identity()));
         List<DeviceEntity> devicesFromShareStatistic =
-                deviceStatisticRepository.findDevicesFromShareStatistic(worker.getName(), worker.getPoolId(), dateFrom).stream()
+                deviceStatisticRepository.findDevicesFromShareStatistic(worker.getName(), worker.getPoolId()).stream()
                 .distinct()
                 .toList();
 

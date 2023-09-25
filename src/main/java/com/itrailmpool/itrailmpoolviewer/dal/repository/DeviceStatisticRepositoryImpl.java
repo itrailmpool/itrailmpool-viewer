@@ -86,11 +86,11 @@ public class DeviceStatisticRepositoryImpl implements DeviceStatisticRepository 
         };
     }
 
-    public List<DeviceEntity> findDevicesFromShareStatistic(String workerName, String poolId, Instant dateFrom) {
+    @Override
+    public List<DeviceEntity> findDevicesFromShareStatistic(String workerName, String poolId) {
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         parameters.addValue("worker", workerName);
         parameters.addValue("poolid", poolId);
-        parameters.addValue("dateFrom",  Timestamp.from(dateFrom));
 
         return namedParameterJdbcTemplate.query("""
                         SELECT CASE WHEN s.device IS NULL THEN '' ELSE s.device END AS name,
@@ -102,27 +102,23 @@ public class DeviceStatisticRepositoryImpl implements DeviceStatisticRepository 
                         FROM shares_statistic s
                                  INNER JOIN workers w ON s.worker = w.name
                         WHERE s.worker = :worker
-                          AND s.created >= :dateFrom
+                          AND s.created > now() - interval '1 hour'
                           AND s.poolid = :poolid
                         GROUP BY s.device, w.id""",
                 parameters,
                 DEVICE_ENTITY_ROW_MAPPER);
     }
 
-    @Scheduled(initialDelay = 1, fixedDelay = 30, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(initialDelay = 60, fixedDelay = 60, timeUnit = TimeUnit.MINUTES)
     public void reloadWorkerDevicesNames() {
-        Instant dateFrom = Instant.now().minus(1, ChronoUnit.DAYS);
-        DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DEFAULT_DATA_FORMAT_PATTERN);
-        ZonedDateTime zdt = dateFrom.atZone(ZoneId.systemDefault());
-
-        LOGGER.info("WorkerDevicesNames cache reloading from {}", formatter.format(zdt));
+        LOGGER.info("WorkerDevicesNames cache reloading");
         try {
             transactionTemplate.executeWithoutResult(status -> {
                 Map<String, List<String>> initDevicesNamesByWorkerMap = new HashMap<>();
                 workerRepository.findAll().forEach(worker ->
                         initDevicesNamesByWorkerMap.put(
                                 buildPoolWorkerKey(worker.getPoolId(), worker.getName()),
-                                findWorkerDevicesNames(worker.getName(), worker.getPoolId(), dateFrom)));
+                                findWorkerDevicesNames(worker.getName(), worker.getPoolId())));
                 devicesNamesByWorker = initDevicesNamesByWorkerMap;
             });
         } catch (Throwable e) {
@@ -137,37 +133,27 @@ public class DeviceStatisticRepositoryImpl implements DeviceStatisticRepository 
 
             return devicesNamesByWorker.get(poolWorkerKey);
         } else {
-            Instant dateFrom = Instant.now().minus(60, ChronoUnit.MINUTES);
-            DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DEFAULT_DATA_FORMAT_PATTERN);
-            ZonedDateTime zdt = dateFrom.atZone(ZoneId.systemDefault());
+            WorkerEntity worker = workerRepository.findByNameAndPoolId(workerName, poolId);
 
-            LOGGER.info("findWorkerDevicesNames from {}", formatter.format(zdt));
+            if (worker == null) {
+                return Collections.emptyList();
+            }
 
-            return findWorkerDevicesNames(workerName, poolId, dateFrom);
+            List<String> devicesNames = deviceRepository.findByWorkerId(worker.getId()).stream()
+                    .map(DeviceEntity::getName)
+                    .toList();
+            List<String> devicesFromSharesStatistic = findDevicesFromShareStatistic(workerName, poolId).stream()
+                    .map(DeviceEntity::getName)
+                    .toList();
+
+            Set<String> workerDevicesNames = new HashSet<>();
+            workerDevicesNames.addAll(devicesNames);
+            workerDevicesNames.addAll(devicesFromSharesStatistic);
+
+            LOGGER.debug("Worker's {} devices: [{}]", workerName, StringUtils.join(workerDevicesNames, ", "));
+
+            return new ArrayList<>(workerDevicesNames);
         }
-    }
-
-    private List<String> findWorkerDevicesNames(String workerName, String poolId, Instant dateFrom) {
-        WorkerEntity worker = workerRepository.findByNameAndPoolId(workerName, poolId);
-
-        if (worker == null) {
-            return Collections.emptyList();
-        }
-
-        List<String> devicesNames = deviceRepository.findByWorkerId(worker.getId()).stream()
-                .map(DeviceEntity::getName)
-                .toList();
-        List<String> devicesFromSharesStatistic = findDevicesFromShareStatistic(workerName, poolId, dateFrom).stream()
-                .map(DeviceEntity::getName)
-                .toList();
-
-        Set<String> workerDevicesNames = new HashSet<>();
-        workerDevicesNames.addAll(devicesNames);
-        workerDevicesNames.addAll(devicesFromSharesStatistic);
-
-        LOGGER.debug("Worker's {} devices: [{}]", workerName, StringUtils.join(workerDevicesNames, ", "));
-
-        return new ArrayList<>(workerDevicesNames);
     }
 
 
