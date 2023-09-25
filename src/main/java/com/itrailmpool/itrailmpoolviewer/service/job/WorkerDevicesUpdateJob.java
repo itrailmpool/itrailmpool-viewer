@@ -37,17 +37,7 @@ public class WorkerDevicesUpdateJob {
     private final DeviceStatisticRepository deviceStatisticRepository;
     private final TransactionTemplate transactionTemplate;
 
-    @Scheduled(cron = "0 0 2 * * ?")
-    private void saveWorkerDevices() {
-        LOGGER.info("Worker's new devices saving");
-
-        transactionTemplate.executeWithoutResult(status -> workerRepository.findAll()
-                .forEach(this::updateDevicesData));
-
-        LOGGER.info("Worker's new devices saved");
-    }
-
-    @Scheduled(initialDelay = 5, fixedDelay = 43200, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(initialDelay = 5, fixedDelay = 20, timeUnit = TimeUnit.MINUTES)
     private void saveWorkerDevicesInit() {
         LOGGER.info("Worker's new devices saving");
 
@@ -59,7 +49,7 @@ public class WorkerDevicesUpdateJob {
 
     private void updateDevicesData(WorkerEntity worker) {
         try {
-            Instant fromDate = Instant.now().minus(1, ChronoUnit.DAYS);
+            Instant fromDate = Instant.now().minus(60, ChronoUnit.MINUTES);
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DEFAULT_DATA_FORMAT_PATTERN);
             ZonedDateTime zdt = fromDate.atZone(ZoneId.systemDefault());
 
