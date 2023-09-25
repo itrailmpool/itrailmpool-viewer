@@ -11,6 +11,7 @@ import com.itrailmpool.itrailmpoolviewer.service.WorkerStatisticServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.transaction.support.TransactionTemplate;
 
@@ -29,22 +30,17 @@ public class WorkerStatisticUpdateJob {
     private final WorkerStatisticRepository workerStatisticRepository;
     private final TransactionTemplate transactionTemplate;
 
-    @Scheduled(initialDelay = 5, fixedDelay = 3600, timeUnit = TimeUnit.MINUTES)
-    private void saveWorkersDailyStatistic() {
-        LOGGER.info("Saving workers daily statistic");
+    @Value("${app.pool.statistic.worker.statistic.run-worker-daily-stat-initialize:false}")
+    private boolean shouldRunWorkerDailyStatisticInitialization;
+    private boolean isWorkerDailyStatisticInitialized = false;
 
-        LocalDate lastWorkerDailyStatisticDate = workerStatisticRepository.getLastWorkerDailyStatisticDate();
-
-        transactionTemplate.executeWithoutResult(status -> {
-            minerSettingsRepository.findAll()
-                    .forEach(minerSettings -> this.updateWorkerStatisticData(minerSettings, lastWorkerDailyStatisticDate));
-        });
-
-        LOGGER.info("Workers daily statistic saved");
-    }
-
-    @Scheduled(initialDelay = 30, fixedDelay = 30, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(initialDelay = 5, fixedDelay = 10, timeUnit = TimeUnit.MINUTES)
     private void updateWorkerDailyStatistic() {
+        if (shouldRunWorkerDailyStatisticInitialization && !isWorkerDailyStatisticInitialized) {
+            saveWorkersDailyStatistic();
+            isWorkerDailyStatisticInitialized = true;
+        }
+
         LOGGER.info("Workers daily statistic updating");
 
         transactionTemplate.executeWithoutResult(status -> {
@@ -86,6 +82,18 @@ public class WorkerStatisticUpdateJob {
         workerStatisticRepository.update(lastWorkerDailyStatistic);
     }
 
+    private void saveWorkersDailyStatistic() {
+        LocalDate lastWorkerDailyStatisticDate = workerStatisticRepository.getLastWorkerDailyStatisticDate();
+        LOGGER.info("Saving workers daily statistic from date: [{}]", lastWorkerDailyStatisticDate);
+
+        transactionTemplate.executeWithoutResult(status -> {
+            minerSettingsRepository.findAll()
+                    .forEach(minerSettings -> this.updateWorkerStatisticData(minerSettings, lastWorkerDailyStatisticDate));
+        });
+
+        LOGGER.info("Workers daily statistic saved");
+    }
+
     private void updateWorkerStatisticData(MinerSettingsEntity minerSettings, LocalDate dateFrom) {
         try {
             updateWorkerStatisticData(minerSettings.getPoolId(), minerSettings.getWorkerName(), dateFrom);
@@ -103,7 +111,7 @@ public class WorkerStatisticUpdateJob {
         }
 
         workerStatisticRepository.saveAll(workerStatistic.stream()
-//                .filter(stat -> stat.getDate().isBefore(LocalDate.now()))
+                .filter(stat -> stat.getDate().isBefore(LocalDate.now()))
                 .toList());
     }
 }

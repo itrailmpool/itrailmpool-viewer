@@ -90,6 +90,7 @@ public class DeviceStatisticRepositoryImpl implements DeviceStatisticRepository 
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         parameters.addValue("worker", workerName);
         parameters.addValue("poolid", poolId);
+        parameters.addValue("dateFrom",  Timestamp.from(dateFrom));
 
         return namedParameterJdbcTemplate.query("""
                         SELECT CASE WHEN s.device IS NULL THEN '' ELSE s.device END AS name,
@@ -101,7 +102,7 @@ public class DeviceStatisticRepositoryImpl implements DeviceStatisticRepository 
                         FROM shares_statistic s
                                  INNER JOIN workers w ON s.worker = w.name
                         WHERE s.worker = :worker
-                          AND s.created >= now() - interval '1 hour'
+                          AND s.created >= :dateFrom
                           AND s.poolid = :poolid
                         GROUP BY s.device, w.id""",
                 parameters,
@@ -136,7 +137,7 @@ public class DeviceStatisticRepositoryImpl implements DeviceStatisticRepository 
 
             return devicesNamesByWorker.get(poolWorkerKey);
         } else {
-            Instant dateFrom = Instant.now().minus(1, ChronoUnit.DAYS);
+            Instant dateFrom = Instant.now().minus(60, ChronoUnit.MINUTES);
             DateTimeFormatter formatter = DateTimeFormatter.ofPattern(DEFAULT_DATA_FORMAT_PATTERN);
             ZonedDateTime zdt = dateFrom.atZone(ZoneId.systemDefault());
 
