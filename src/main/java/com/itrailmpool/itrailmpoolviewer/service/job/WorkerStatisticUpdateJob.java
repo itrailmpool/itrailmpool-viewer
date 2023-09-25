@@ -37,7 +37,7 @@ public class WorkerStatisticUpdateJob {
 
         transactionTemplate.executeWithoutResult(status -> {
             minerSettingsRepository.findAll()
-                    .forEach(minerSettings -> this.updateWorkerStatisticData(minerSettings, LocalDate.now()));
+                    .forEach(minerSettings -> this.updateWorkerStatisticData(minerSettings, lastWorkerDailyStatisticDate));
         });
 
         LOGGER.info("Workers daily statistic saved");
@@ -103,7 +103,7 @@ public class WorkerStatisticUpdateJob {
         }
 
         workerStatisticRepository.saveAll(workerStatistic.stream()
-                .filter(stat -> stat.getDate().isBefore(LocalDate.now()))
+//                .filter(stat -> stat.getDate().isBefore(LocalDate.now()))
                 .toList());
     }
 }
