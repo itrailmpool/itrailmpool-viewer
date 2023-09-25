@@ -65,7 +65,6 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
             WorkerHashRateStatisticEntity workerStatistic = new WorkerHashRateStatisticEntity();
 
             workerStatistic.setAverageHashRate(resultSet.getBigDecimal("total_average_hashrate"));
-            workerStatistic.setAverageSharesPerSecond(resultSet.getBigDecimal("total_average_sharespersecond"));
             workerStatistic.setDate(resultSet.getTimestamp("date").toInstant());
 
             return workerStatistic;
