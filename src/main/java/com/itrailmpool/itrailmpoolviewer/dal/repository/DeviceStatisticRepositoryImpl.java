@@ -239,7 +239,7 @@ public class DeviceStatisticRepositoryImpl implements DeviceStatisticRepository 
                                CASE WHEN max(s.created) >= NOW() - make_interval(secs => :deviceOnlineCheckInterval) THEN true ELSE false END AS is_online
                         FROM shares_statistic s
                         WHERE s.worker = :workerName 
-                            AND s.created > now() - interval '1 day'
+                            AND s.created > now() - interval '1 hour'
                             AND s.device IN (:workerDevicesNames)
                         GROUP BY s.device, s.worker""",
                 parameters,

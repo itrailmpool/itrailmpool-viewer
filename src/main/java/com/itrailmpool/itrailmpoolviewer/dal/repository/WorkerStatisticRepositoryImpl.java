@@ -22,6 +22,8 @@ import org.springframework.stereotype.Repository;
 
 import java.sql.PreparedStatement;
 import java.sql.SQLException;
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.time.LocalDate;
 import java.util.List;
 
@@ -104,6 +106,7 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
             shareStatisticEntity.setTotalAcceptedShares(resultSet.getBigDecimal("accepted_shares").toBigInteger());
             shareStatisticEntity.setTotalRejectedShares(resultSet.getBigDecimal("rejected_shares").toBigInteger());
             shareStatisticEntity.setTotalPayment(resultSet.getBigDecimal("total_reward"));
+            shareStatisticEntity.setModifiedDate(resultSet.getTimestamp("modification_date").toInstant());
 
             return shareStatisticEntity;
         };
@@ -111,12 +114,12 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
 
     @Override
     public List<WorkerStatisticEntity> getWorkerStatistic(String poolId, String workerName) {
-        LocalDate lastWorkerDailyStatisticDate = getLastWorkerDailyStatisticDate();
+//        LocalDate lastWorkerDailyStatisticDate = getLastWorkerDailyStatisticDate();
 
-        List<WorkerStatisticEntity> workerDailyStatistic = getWorkerDailyStatistic(poolId, workerName, null, lastWorkerDailyStatisticDate);
-        List<WorkerStatisticEntity> workerStatisticFromDate = getWorkerStatisticFromDate(poolId, workerName, lastWorkerDailyStatisticDate);
+        List<WorkerStatisticEntity> workerDailyStatistic = getWorkerDailyStatistic(poolId, workerName, null, null);
+//        List<WorkerStatisticEntity> workerStatisticFromDate = getWorkerStatisticFromDate(poolId, workerName, lastWorkerDailyStatisticDate);
 
-        return ListUtils.union(workerDailyStatistic, workerStatisticFromDate);
+        return workerDailyStatistic;
     }
 
     @Override
@@ -201,6 +204,58 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
         }
     }
 
+    @Override
+    public void update(WorkerStatisticEntity workerStatisticEntities) {
+        try {
+            MapSqlParameterSource parameters = new MapSqlParameterSource();
+            parameters.addValue("poolid", workerStatisticEntities.getPoolId());
+            parameters.addValue("workername", workerStatisticEntities.getWorkerName());
+            parameters.addValue("date", workerStatisticEntities.getDate());
+            parameters.addValue("average_hashrate", workerStatisticEntities.getAverageHashRate());
+            parameters.addValue("accepted_shares", workerStatisticEntities.getTotalAcceptedShares());
+            parameters.addValue("rejected_shares", workerStatisticEntities.getTotalRejectedShares());
+            parameters.addValue("total_reward", workerStatisticEntities.getTotalPayment());
+            parameters.addValue("modification_date", Timestamp.from(workerStatisticEntities.getModifiedDate()));
+
+            namedParameterJdbcTemplate.update("""
+                            UPDATE worker_daily_statistic
+                            SET average_hashrate = :average_hashrate,
+                                accepted_shares = :accepted_shares,
+                                rejected_shares = :rejected_shares,
+                                total_reward = :total_reward,
+                                modification_date = :modification_date
+                            WHERE poolid = :poolid 
+                                AND workername = :workername
+                                AND date = :date        
+                            """,
+                    parameters);
+        } catch (DataAccessException e) {
+            LOGGER.error("Unable to insert new values", e);
+        }
+    }
+
+    @Override
+    public WorkerStatisticEntity getLastWorkerDailyStatistic(String poolId, String workerName) {
+        try {
+            MapSqlParameterSource parameters = new MapSqlParameterSource();
+            parameters.addValue("poolId", poolId);
+            parameters.addValue("workerName", workerName);
+
+            return namedParameterJdbcTemplate.queryForObject("""
+                            SELECT *
+                            FROM worker_daily_statistic
+                            WHERE poolid = :poolId AND workername = :workerName
+                            ORDER BY date DESC
+                            LIMIT 1;""",
+                    parameters,
+                    WORKER_STATISTIC_ROW_MAPPER);
+        } catch (EmptyResultDataAccessException e) {
+            LOGGER.debug("WorkerStatisticEntity for poolId {} and workerName {} not found", poolId, workerName);
+
+            return null;
+        }
+    }
+
     private List<WorkerShareStatisticEntity> getWorkerShareStatistics(String poolId, String workerName, LocalDate fromDate) {
         if (fromDate == null) {
             return jdbcTemplate.query("""
@@ -229,8 +284,8 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
                         FROM shares_statistic
                         WHERE 
                             worker = ? AND 
-                            poolid = ? AND 
-                            date_trunc('day', created) > ?
+                            date_trunc('day', created) > ? AND 
+                            poolid = ?
                         GROUP BY date_trunc('day', created), worker, poolid
                         ORDER BY date DESC""",
                 WORKER_SHARE_STATISTIC_ROW_MAPPER,
@@ -239,58 +294,186 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
                 fromDate);
     }
 
-    private List<WorkerHashRateStatisticEntity> getWorkerHashRateStatistic(String poolId, String workerName, LocalDate fromDate) {
-        if (fromDate == null) {
-            return jdbcTemplate.query("""
-                            SELECT date,
-                                   SUM(average_hashrate)        AS total_average_hashrate,
-                                   SUM(average_sharespersecond) AS total_average_sharespersecond
-                            FROM (
-                                     SELECT date_trunc('day', m.created) AS date,
-                                            AVG(m.hashrate)              AS average_hashrate,
-                                            AVG(m.sharespersecond)       AS average_sharespersecond
-                                     FROM minerstats m
-                                     WHERE m.poolid = ?
-                                       AND m.worker IN (
-                                         SELECT s.worker || '.' || s.device
-                                         FROM shares_statistic s
-                                         WHERE s.worker = ?
-                                     )
-                                     GROUP BY date_trunc('day', m.created), m.worker
-                                 ) AS subquery
-                            GROUP BY date
-                            ORDER BY date DESC""",
-                    WORKER_HASH_RATE_STATISTIC_ROW_MAPPER,
-                    poolId,
-                    workerName);
+    @Override
+    public WorkerShareStatisticEntity getWorkerShareStatisticsFromDate(String poolId, String workerName, Instant dateFrom) {
+        try {
+            if (dateFrom == null) {
+                return getWorkerShareStatistics(poolId, workerName);
+            }
+
+            return getWorkerShareStatistics(poolId, workerName, dateFrom);
+        } catch (EmptyResultDataAccessException e) {
+            LOGGER.debug("WorkerShareStatisticEntity for poolId {} and workerName {} not found for current day", poolId, workerName);
         }
 
-        return jdbcTemplate.query("""
+        return null;
+    }
+
+    private WorkerShareStatisticEntity getWorkerShareStatistics(String poolId, String workerName) {
+        MapSqlParameterSource parameters = new MapSqlParameterSource();
+        parameters.addValue("poolId", poolId);
+        parameters.addValue("workerName", workerName);
+
+        return namedParameterJdbcTemplate.queryForObject("""
+                        SELECT worker,
+                               poolid,
+                               MAX(created)                                 AS date,               
+                               sum(CASE WHEN isvalid THEN 1 ELSE 0 END)     AS total_valid_shares,
+                               sum(CASE WHEN NOT isvalid THEN 1 ELSE 0 END) AS total_invalid_shares
+                         FROM shares_statistic
+                         WHERE worker = :workerName AND 
+                               created > now() - interval '1 hour' AND
+                               poolid = :poolId
+                         GROUP BY date_trunc('day', created), worker, poolid
+                         ORDER BY date DESC""",
+                parameters,
+                WORKER_SHARE_STATISTIC_ROW_MAPPER);
+    }
+
+    private WorkerShareStatisticEntity getWorkerShareStatistics(String poolId, String workerName, Instant dateFrom) {
+        MapSqlParameterSource parameters = new MapSqlParameterSource();
+        parameters.addValue("poolId", poolId);
+        parameters.addValue("workerName", workerName);
+        parameters.addValue("dateFrom", dateFrom);
+
+        return namedParameterJdbcTemplate.queryForObject("""
+                        SELECT worker,
+                               poolid,
+                               MAX(created)                                 AS date,               
+                               sum(CASE WHEN isvalid THEN 1 ELSE 0 END)     AS total_valid_shares,
+                               sum(CASE WHEN NOT isvalid THEN 1 ELSE 0 END) AS total_invalid_shares
+                        FROM shares_statistic
+                        WHERE 
+                            worker = :workerName AND 
+                            created > :dateFrom AND 
+                            poolid = :poolId
+                        GROUP BY date_trunc('day', created), worker, poolid
+                        ORDER BY date DESC""",
+                parameters,
+                WORKER_SHARE_STATISTIC_ROW_MAPPER);
+    }
+
+    private List<WorkerHashRateStatisticEntity> getWorkerHashRateStatistic(String poolId, String workerName, LocalDate fromDate) {
+        MapSqlParameterSource parameters = new MapSqlParameterSource();
+        parameters.addValue("poolId", poolId);
+        parameters.addValue("workerName", workerName);
+
+        if (fromDate == null) {
+            return namedParameterJdbcTemplate.query("""
+                            SELECT date,
+                                   SUM(average_hashrate)        AS total_average_hashrate
+                            FROM (SELECT date_trunc('day', m.created) AS date,
+                                         AVG(m.hashrate)              AS average_hashrate
+                                  FROM minerstats m
+                                  WHERE m.poolid = :poolId
+                                    AND m.worker IN (
+                                         SELECT w.name || '.' || d.name
+                                         FROM workers w
+                                         INNER JOIN devices d on w.id = d.worker_id
+                                         WHERE w.poolid = :poolId AND w.name = :workerName
+                                     )
+                                  GROUP BY date_trunc('day', m.created), m.worker
+                                 ) AS subquery
+                            GROUP BY date
+                            ORDER BY date DESC;""",
+                    parameters,
+                    WORKER_HASH_RATE_STATISTIC_ROW_MAPPER);
+        }
+
+        parameters.addValue("fromDate", fromDate);
+
+        return namedParameterJdbcTemplate.query("""
                         SELECT date,
-                               SUM(average_hashrate)        AS total_average_hashrate,
-                               SUM(average_sharespersecond) AS total_average_sharespersecond
-                        FROM (
-                                 SELECT date_trunc('day', m.created) AS date,
-                                        AVG(m.hashrate)              AS average_hashrate,
-                                        AVG(m.sharespersecond)       AS average_sharespersecond
-                                 FROM minerstats m
-                                 WHERE m.poolid = ?
-                                   AND m.created > ?
-                                   AND m.worker IN (
-                                     SELECT s.worker || '.' || s.device
-                                     FROM shares_statistic s
-                                     WHERE s.worker = ? AND s.created > ?
-                                 ) 
-                                 GROUP BY date_trunc('day', m.created), m.worker
+                               SUM(average_hashrate) AS total_average_hashrate
+                        FROM (SELECT date_trunc('day', m.created) AS date,
+                                     AVG(m.hashrate)              AS average_hashrate
+                              FROM minerstats m
+                              WHERE m.poolid = :poolId
+                                AND m.created > :fromDate
+                                AND m.worker IN (
+                                     SELECT w.name || '.' || d.name
+                                     FROM workers w
+                                     INNER JOIN devices d on w.id = d.worker_id
+                                     WHERE w.poolid = :poolId AND w.name = :workerName
+                                 )
+                                GROUP BY date_trunc('day', m.created), m.worker
                              ) AS subquery
                         GROUP BY date
-                        ORDER BY date DESC""",
-                WORKER_HASH_RATE_STATISTIC_ROW_MAPPER,
-                poolId,
-                fromDate,
-                workerName,
-                fromDate);
+                        ORDER BY date DESC;""",
+                parameters,
+                WORKER_HASH_RATE_STATISTIC_ROW_MAPPER);
     }
+
+    @Override
+    public WorkerHashRateStatisticEntity getWorkerHashRateStatisticFromDate(String poolId, String workerName, Instant dateFrom) {
+        try {
+            if (dateFrom == null) {
+                return getWorkerHashRateStatistic(poolId, workerName);
+            }
+
+            return getWorkerHashRateStatistic(poolId, workerName, dateFrom);
+        } catch (EmptyResultDataAccessException e) {
+            LOGGER.debug("WorkerHashRateStatisticEntity for poolId {} and workerName {} not found for current day", poolId, workerName);
+        }
+
+        return null;
+    }
+
+    private WorkerHashRateStatisticEntity getWorkerHashRateStatistic(String poolId, String workerName) {
+        MapSqlParameterSource parameters = new MapSqlParameterSource();
+        parameters.addValue("poolId", poolId);
+        parameters.addValue("workerName", workerName);
+
+        return namedParameterJdbcTemplate.queryForObject("""
+                        SELECT date,
+                               SUM(average_hashrate)        AS total_average_hashrate
+                        FROM (SELECT date_trunc('day', m.created) AS date,
+                                     AVG(m.hashrate)              AS average_hashrate
+                              FROM minerstats m
+                              WHERE m.poolid = :poolId
+                                AND m.created > date_trunc('day', now())
+                                AND m.worker IN (
+                                     SELECT w.name || '.' || d.name
+                                     FROM workers w
+                                     INNER JOIN devices d on w.id = d.worker_id
+                                     WHERE w.poolid = :poolId AND w.name = :workerName
+                                 )
+                              GROUP BY date_trunc('day', m.created), m.worker
+                             ) AS subquery
+                        GROUP BY date
+                        ORDER BY date DESC;""",
+                parameters,
+                WORKER_HASH_RATE_STATISTIC_ROW_MAPPER);
+    }
+
+    private WorkerHashRateStatisticEntity getWorkerHashRateStatistic(String poolId, String workerName, Instant dateFrom) {
+        MapSqlParameterSource parameters = new MapSqlParameterSource();
+        parameters.addValue("poolId", poolId);
+        parameters.addValue("workerName", workerName);
+        parameters.addValue("dateFrom", dateFrom);
+
+        return namedParameterJdbcTemplate.queryForObject("""
+                        SELECT date,
+                               SUM(average_hashrate)        AS total_average_hashrate
+                        FROM (SELECT date_trunc('day', m.created) AS date,
+                                     AVG(m.hashrate)              AS average_hashrate
+                              FROM minerstats m
+                              WHERE m.poolid = :poolId
+                                AND m.created BETWEEN date_trunc('day', :dateFrom) AND date_trunc('day', :dateFrom + interval '1 day')
+                                AND m.worker IN (
+                                     SELECT w.name || '.' || d.name
+                                     FROM workers w
+                                     INNER JOIN devices d on w.id = d.worker_id
+                                     WHERE w.poolid = :poolId AND w.name = :workerName
+                                 )
+                              GROUP BY date_trunc('day', m.created), m.worker
+                             ) AS subquery
+                        GROUP BY date
+                        ORDER BY date DESC;""",
+                parameters,
+                WORKER_HASH_RATE_STATISTIC_ROW_MAPPER);
+    }
+
 
     private List<WorkerPaymentStatisticEntity> getWorkerPaymentStatistic(String poolId, String workerName, LocalDate fromDate) {
         if (fromDate == null) {
@@ -299,11 +482,12 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
                                    SUM(p.amount)                AS total_payments
                             FROM payments p
                                      JOIN miner_settings ms ON p.address = ms.address
-                            WHERE ms.workername = ?
+                            WHERE p.poolid = ? AND ms.workername = ?
                             GROUP BY date_trunc('day', p.created)
                             ORDER BY date DESC;
                             """,
                     WORKER_PAYMENT_STATISTIC_ROW_MAPPER,
+                    poolId,
                     workerName);
         }
 
@@ -312,13 +496,68 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
                                SUM(p.amount)                AS total_payments
                         FROM payments p
                                  JOIN miner_settings ms ON p.address = ms.address
-                        WHERE ms.workername = ? AND p.created > ?
+                        WHERE p.poolid = ? AND ms.workername = ? AND p.created > ?
                         GROUP BY date_trunc('day', p.created)
                         ORDER BY date DESC;
                         """,
                 WORKER_PAYMENT_STATISTIC_ROW_MAPPER,
+                poolId,
                 workerName,
                 fromDate);
+    }
+
+    @Override
+    public WorkerPaymentStatisticEntity getWorkerPaymentStatisticFromDate(String poolId, String workerName, Instant dateFrom) {
+        try {
+            if (dateFrom == null) {
+                return getWorkerPaymentStatistic(poolId, workerName);
+            }
+
+            return getWorkerPaymentStatistic(poolId, workerName, dateFrom);
+        } catch (EmptyResultDataAccessException e) {
+            LOGGER.debug("WorkerPaymentStatisticEntity for poolId {} and workerName {} not found for current day", poolId, workerName);
+        }
+
+        return null;
+    }
+
+    private WorkerPaymentStatisticEntity getWorkerPaymentStatistic(String poolId, String workerName) {
+        MapSqlParameterSource parameters = new MapSqlParameterSource();
+        parameters.addValue("poolId", poolId);
+        parameters.addValue("workerName", workerName);
+
+        return namedParameterJdbcTemplate.queryForObject("""
+                        SELECT date_trunc('day', p.created) AS date,
+                               SUM(p.amount)                AS total_payments
+                        FROM payments p
+                        INNER JOIN miner_settings ms ON p.address = ms.address
+                        WHERE p.poolid = :poolId
+                            AND ms.workername = :workerName
+                            AND date_trunc ('day', p.created) = date_trunc('day', now())
+                        GROUP BY date_trunc('day', p.created)
+                        ORDER BY date DESC;""",
+                parameters,
+                WORKER_PAYMENT_STATISTIC_ROW_MAPPER);
+    }
+
+    private WorkerPaymentStatisticEntity getWorkerPaymentStatistic(String poolId, String workerName, Instant dateFrom) {
+        MapSqlParameterSource parameters = new MapSqlParameterSource();
+        parameters.addValue("poolId", poolId);
+        parameters.addValue("workerName", workerName);
+        parameters.addValue("dateFrom", dateFrom);
+
+        return namedParameterJdbcTemplate.queryForObject("""
+                        SELECT date_trunc('day', p.created) AS date,
+                               SUM(p.amount)                AS total_payments
+                        FROM payments p
+                        INNER JOIN miner_settings ms ON p.address = ms.address
+                        WHERE p.poolid = :poolId
+                            AND ms.workername = :workerName
+                            AND date_trunc ('day', p.created) = date_trunc('day', :dateFrom)
+                        GROUP BY date_trunc('day', p.created)
+                        ORDER BY date DESC;""",
+                parameters,
+                WORKER_PAYMENT_STATISTIC_ROW_MAPPER);
     }
 
     private List<WorkerStatisticEntity> getWorkerDailyStatistic(String poolId, String workerName, LocalDate fromDate, LocalDate toDate) {
