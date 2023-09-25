@@ -10,6 +10,5 @@ public class WorkerHashRateStatisticEntity {
 
     private String workerName;
     private BigDecimal averageHashRate;
-    private BigDecimal averageSharesPerSecond;
     private Instant date;
 }
