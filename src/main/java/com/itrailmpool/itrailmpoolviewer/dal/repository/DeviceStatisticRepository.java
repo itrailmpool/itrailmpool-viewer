@@ -14,5 +14,5 @@ public interface DeviceStatisticRepository {
 
     Integer getActiveWorkersCount(String poolId);
 
-    List<DeviceEntity> findDevicesFromShareStatistic(String workerName, String poolId, Instant dateFrom);
+    List<DeviceEntity> findDevicesFromShareStatistic(String workerName, String poolId);
 }

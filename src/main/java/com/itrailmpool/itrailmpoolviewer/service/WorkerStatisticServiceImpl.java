@@ -91,7 +91,7 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
         }
     }
 
-    @Scheduled(initialDelay = 10, fixedDelay = 5, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(initialDelay = 5, fixedDelay = 5, timeUnit = TimeUnit.MINUTES)
     private void reload() {
         try {
             LOGGER.info("WorkerStatistic cache reloading");
