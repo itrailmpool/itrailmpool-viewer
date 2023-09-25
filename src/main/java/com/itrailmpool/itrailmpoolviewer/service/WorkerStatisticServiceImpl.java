@@ -115,12 +115,10 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
         LOGGER.info("Worker {} statistic cache reloaded", minerSettings.getWorkerName());
 
         return workerStatisticData;
-
     }
 
     private WorkerStatisticContainerDto getWorkerStatisticData(String poolId, String workerName) {
-//        List<DeviceStatisticEntity> devicesStatistic = deviceStatisticRepository.getWorkerDevicesStatistic(poolId, workerName);
-        List<DeviceStatisticEntity> devicesStatistic = Collections.emptyList();
+        List<DeviceStatisticEntity> devicesStatistic = deviceStatisticRepository.getWorkerDevicesStatistic(poolId, workerName);
         WorkerHashRateEntity workerHashRateEntity = workerStatisticRepository.getWorkerHashRate(poolId, workerName);
 
         List<WorkerStatisticEntity> workerStatistic = workerStatisticRepository.getWorkerStatistic(poolId, workerName).stream()
@@ -141,7 +139,7 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
                         .setTotalDevices(totalDevicesCount)
                         .setDevicesOnline(devicesOnline)
                         .setDevicesOffline(devicesOffline)
-                        .setWorkerDevicesStatistic(deviceStatisticMapper.toDeviceStatistic(devicesStatistic)));
+                        .setWorkerDevicesStatistic(deviceStatisticMapper.toDeviceStatistic(Collections.emptyList())));//todo: remove empty list after fix performance issue
     }
 
     public static String buildPoolWorkerKey(String poolId, String workerName) {
