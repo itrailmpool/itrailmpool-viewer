@@ -337,7 +337,7 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         parameters.addValue("poolId", poolId);
         parameters.addValue("workerName", workerName);
-        parameters.addValue("dateFrom", dateFrom);
+        parameters.addValue("dateFrom", Timestamp.from(dateFrom));
 
         return namedParameterJdbcTemplate.queryForObject("""
                         SELECT worker,
@@ -453,7 +453,7 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         parameters.addValue("poolId", poolId);
         parameters.addValue("workerName", workerName);
-        parameters.addValue("dateFrom", dateFrom);
+        parameters.addValue("dateFrom",  Timestamp.from(dateFrom));
 
         return namedParameterJdbcTemplate.queryForObject("""
                         SELECT date,
@@ -547,7 +547,7 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         parameters.addValue("poolId", poolId);
         parameters.addValue("workerName", workerName);
-        parameters.addValue("dateFrom", dateFrom);
+        parameters.addValue("dateFrom",  Timestamp.from(dateFrom));
 
         return namedParameterJdbcTemplate.queryForObject("""
                         SELECT date_trunc('day', p.created) AS date,
