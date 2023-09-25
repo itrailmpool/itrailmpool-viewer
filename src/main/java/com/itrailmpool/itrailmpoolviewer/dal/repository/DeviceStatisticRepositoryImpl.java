@@ -101,7 +101,7 @@ public class DeviceStatisticRepositoryImpl implements DeviceStatisticRepository 
                         FROM shares_statistic s
                                  INNER JOIN workers w ON s.worker = w.name
                         WHERE s.worker = :worker
-                          AND s.created >= now() - interval '1 day'
+                          AND s.created >= now() - interval '1 hour'
                           AND s.poolid = :poolid
                         GROUP BY s.device, w.id""",
                 parameters,
