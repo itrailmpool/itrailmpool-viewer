@@ -347,7 +347,7 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
                         FROM shares_statistic
                         WHERE 
                             worker = :workerName AND 
-                            created BETWEEN :dateFrom AND date_trunc('day', (:dateFrom + interval '1 day')::timestamptz) AND 
+                            created BETWEEN :dateFrom AND date_trunc('day', :dateFrom::timestamp + interval '1 day') AND 
                             poolid = :poolId
                         GROUP BY date_trunc('day', created), worker, poolid
                         ORDER BY date DESC""",
@@ -461,7 +461,7 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
                                      AVG(m.hashrate)              AS average_hashrate
                               FROM minerstats m
                               WHERE m.poolid = :poolId
-                                AND m.created BETWEEN date_trunc('day', :dateFrom) AND date_trunc('day', (:dateFrom + interval '1 day')::timestamptz)
+                                AND m.created BETWEEN date_trunc('day', :dateFrom) AND date_trunc('day', :dateFrom::timestamp + interval '1 day')
                                 AND m.worker IN (
                                      SELECT w.name || '.' || d.name
                                      FROM workers w
