@@ -26,9 +26,9 @@ public interface WorkerStatisticRepository {
 
     WorkerStatisticEntity getLastWorkerDailyStatistic(String poolId, String workerName);
 
-    WorkerShareStatisticEntity getWorkerShareStatisticsFromDate(String poolId, String workerName, Instant dateFrom);
+    List<WorkerShareStatisticEntity> getWorkerShareStatisticsFromDate(String poolId, String workerName, Instant dateFrom);
 
-    WorkerHashRateStatisticEntity getWorkerHashRateStatisticFromDate(String poolId, String workerName, Instant dateFrom);
+    List<WorkerHashRateStatisticEntity> getWorkerHashRateStatisticFromDate(String poolId, String workerName, Instant dateFrom);
 
-    WorkerPaymentStatisticEntity getWorkerPaymentStatisticFromDate(String poolId, String workerName, Instant dateFrom);
+    List<WorkerPaymentStatisticEntity> getWorkerPaymentStatisticFromDate(String poolId, String workerName, Instant dateFrom);
 }

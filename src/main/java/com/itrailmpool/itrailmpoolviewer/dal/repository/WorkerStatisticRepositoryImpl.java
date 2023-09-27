@@ -297,7 +297,7 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
     }
 
     @Override
-    public WorkerShareStatisticEntity getWorkerShareStatisticsFromDate(String poolId, String workerName, Instant dateFrom) {
+    public List<WorkerShareStatisticEntity> getWorkerShareStatisticsFromDate(String poolId, String workerName, Instant dateFrom) {
         try {
             if (dateFrom == null) {
                 return getWorkerShareStatistics(poolId, workerName);
@@ -311,12 +311,12 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
         return null;
     }
 
-    private WorkerShareStatisticEntity getWorkerShareStatistics(String poolId, String workerName) {
+    private List<WorkerShareStatisticEntity> getWorkerShareStatistics(String poolId, String workerName) {
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         parameters.addValue("poolId", poolId);
         parameters.addValue("workerName", workerName);
 
-        return namedParameterJdbcTemplate.queryForObject("""
+        return namedParameterJdbcTemplate.query("""
                         SELECT worker,
                                poolid,
                                MAX(created)                                 AS date,               
@@ -332,13 +332,13 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
                 WORKER_SHARE_STATISTIC_ROW_MAPPER);
     }
 
-    private WorkerShareStatisticEntity getWorkerShareStatistics(String poolId, String workerName, Instant dateFrom) {
+    private List<WorkerShareStatisticEntity> getWorkerShareStatistics(String poolId, String workerName, Instant dateFrom) {
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         parameters.addValue("poolId", poolId);
         parameters.addValue("workerName", workerName);
         parameters.addValue("dateFrom", Timestamp.from(dateFrom));
 
-        return namedParameterJdbcTemplate.queryForObject("""
+        return namedParameterJdbcTemplate.query("""
                         SELECT worker,
                                poolid,
                                MAX(created)                                 AS date,               
@@ -347,7 +347,7 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
                         FROM shares_statistic
                         WHERE 
                             worker = :workerName AND 
-                            created BETWEEN :dateFrom AND date_trunc('day', :dateFrom::timestamp + interval '1 day') AND 
+                            created > :dateFrom AND 
                             poolid = :poolId
                         GROUP BY date_trunc('day', created), worker, poolid
                         ORDER BY date DESC""",
@@ -407,7 +407,7 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
     }
 
     @Override
-    public WorkerHashRateStatisticEntity getWorkerHashRateStatisticFromDate(String poolId, String workerName, Instant dateFrom) {
+    public List<WorkerHashRateStatisticEntity> getWorkerHashRateStatisticFromDate(String poolId, String workerName, Instant dateFrom) {
         try {
             if (dateFrom == null) {
                 return getWorkerHashRateStatistic(poolId, workerName);
@@ -421,12 +421,12 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
         return null;
     }
 
-    private WorkerHashRateStatisticEntity getWorkerHashRateStatistic(String poolId, String workerName) {
+    private List<WorkerHashRateStatisticEntity> getWorkerHashRateStatistic(String poolId, String workerName) {
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         parameters.addValue("poolId", poolId);
         parameters.addValue("workerName", workerName);
 
-        return namedParameterJdbcTemplate.queryForObject("""
+        return namedParameterJdbcTemplate.query("""
                         SELECT date,
                                SUM(average_hashrate)        AS total_average_hashrate
                         FROM (SELECT date_trunc('day', m.created) AS date,
@@ -448,20 +448,20 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
                 WORKER_HASH_RATE_STATISTIC_ROW_MAPPER);
     }
 
-    private WorkerHashRateStatisticEntity getWorkerHashRateStatistic(String poolId, String workerName, Instant dateFrom) {
+    private List<WorkerHashRateStatisticEntity> getWorkerHashRateStatistic(String poolId, String workerName, Instant dateFrom) {
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         parameters.addValue("poolId", poolId);
         parameters.addValue("workerName", workerName);
         parameters.addValue("dateFrom",  Timestamp.from(dateFrom));
 
-        return namedParameterJdbcTemplate.queryForObject("""
+        return namedParameterJdbcTemplate.query("""
                         SELECT date,
                                SUM(average_hashrate)        AS total_average_hashrate
                         FROM (SELECT date_trunc('day', m.created) AS date,
                                      AVG(m.hashrate)              AS average_hashrate
                               FROM minerstats m
                               WHERE m.poolid = :poolId
-                                AND m.created BETWEEN date_trunc('day', :dateFrom) AND date_trunc('day', :dateFrom::timestamp + interval '1 day')
+                                AND m.created > date_trunc('day', :dateFrom)
                                 AND m.worker IN (
                                      SELECT w.name || '.' || d.name
                                      FROM workers w
@@ -509,7 +509,7 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
     }
 
     @Override
-    public WorkerPaymentStatisticEntity getWorkerPaymentStatisticFromDate(String poolId, String workerName, Instant dateFrom) {
+    public List<WorkerPaymentStatisticEntity> getWorkerPaymentStatisticFromDate(String poolId, String workerName, Instant dateFrom) {
         try {
             if (dateFrom == null) {
                 return getWorkerPaymentStatistic(poolId, workerName);
@@ -523,12 +523,12 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
         return null;
     }
 
-    private WorkerPaymentStatisticEntity getWorkerPaymentStatistic(String poolId, String workerName) {
+    private List<WorkerPaymentStatisticEntity> getWorkerPaymentStatistic(String poolId, String workerName) {
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         parameters.addValue("poolId", poolId);
         parameters.addValue("workerName", workerName);
 
-        return namedParameterJdbcTemplate.queryForObject("""
+        return namedParameterJdbcTemplate.query("""
                         SELECT date_trunc('day', p.created) AS date,
                                SUM(p.amount)                AS total_payments
                         FROM payments p
@@ -542,20 +542,20 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
                 WORKER_PAYMENT_STATISTIC_ROW_MAPPER);
     }
 
-    private WorkerPaymentStatisticEntity getWorkerPaymentStatistic(String poolId, String workerName, Instant dateFrom) {
+    private List<WorkerPaymentStatisticEntity> getWorkerPaymentStatistic(String poolId, String workerName, Instant dateFrom) {
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         parameters.addValue("poolId", poolId);
         parameters.addValue("workerName", workerName);
         parameters.addValue("dateFrom",  Timestamp.from(dateFrom));
 
-        return namedParameterJdbcTemplate.queryForObject("""
+        return namedParameterJdbcTemplate.query("""
                         SELECT date_trunc('day', p.created) AS date,
                                SUM(p.amount)                AS total_payments
                         FROM payments p
                         INNER JOIN miner_settings ms ON p.address = ms.address
                         WHERE p.poolid = :poolId
                             AND ms.workername = :workerName
-                            AND date_trunc ('day', p.created) = date_trunc('day', :dateFrom)
+                            AND date_trunc ('day', p.created) > date_trunc('day', :dateFrom)
                         GROUP BY date_trunc('day', p.created)
                         ORDER BY date DESC;""",
                 parameters,

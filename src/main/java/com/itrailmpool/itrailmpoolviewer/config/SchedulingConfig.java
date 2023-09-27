@@ -2,6 +2,7 @@ package com.itrailmpool.itrailmpoolviewer.config;
 
 import com.itrailmpool.itrailmpoolviewer.dal.repository.MinerSettingsRepository;
 import com.itrailmpool.itrailmpoolviewer.dal.repository.WorkerStatisticRepository;
+import com.itrailmpool.itrailmpoolviewer.mapper.WorkerStatisticMapper;
 import com.itrailmpool.itrailmpoolviewer.service.job.WorkerStatisticUpdateJob;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
@@ -27,7 +28,8 @@ public class SchedulingConfig {
     @ConditionalOnProperty(prefix = "app.pool.statistic.worker.daily-aggregation", name = "enabled", havingValue = "true")
     public WorkerStatisticUpdateJob workerStatisticUpdateJob(MinerSettingsRepository minerSettingsRepository,
                                                              WorkerStatisticRepository workerStatisticRepository,
-                                                             TransactionTemplate transactionTemplate) {
-        return new WorkerStatisticUpdateJob(minerSettingsRepository, workerStatisticRepository, transactionTemplate);
+                                                             TransactionTemplate transactionTemplate,
+                                                             WorkerStatisticMapper workerStatisticMapper) {
+        return new WorkerStatisticUpdateJob(minerSettingsRepository, workerStatisticRepository, transactionTemplate, workerStatisticMapper);
     }
 }
