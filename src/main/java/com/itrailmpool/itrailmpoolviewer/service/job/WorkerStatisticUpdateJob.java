@@ -7,6 +7,7 @@ import com.itrailmpool.itrailmpoolviewer.dal.entity.WorkerShareStatisticEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.WorkerStatisticEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.repository.MinerSettingsRepository;
 import com.itrailmpool.itrailmpoolviewer.dal.repository.WorkerStatisticRepository;
+import com.itrailmpool.itrailmpoolviewer.mapper.WorkerStatisticMapper;
 import com.itrailmpool.itrailmpoolviewer.service.WorkerStatisticServiceImpl;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
@@ -18,6 +19,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
 
@@ -29,6 +31,7 @@ public class WorkerStatisticUpdateJob {
     private final MinerSettingsRepository minerSettingsRepository;
     private final WorkerStatisticRepository workerStatisticRepository;
     private final TransactionTemplate transactionTemplate;
+    private final WorkerStatisticMapper workerStatisticMapper;
 
     @Value("${app.pool.statistic.worker.statistic.run-worker-daily-stat-initialize:false}")
     private boolean shouldRunWorkerDailyStatisticInitialization;
@@ -61,25 +64,38 @@ public class WorkerStatisticUpdateJob {
     }
 
     private void updateWorkerDailyStatistic(String poolId, String workerName) {
-        WorkerStatisticEntity lastWorkerDailyStatistic = workerStatisticRepository.getLastWorkerDailyStatistic(poolId, workerName);
-        Instant lastModificationDate = lastWorkerDailyStatistic.getModifiedDate();
+        WorkerStatisticEntity lastSavedWorkerDailyStatistic = workerStatisticRepository.getLastWorkerDailyStatistic(poolId, workerName);
+        Instant lastModificationDate = lastSavedWorkerDailyStatistic.getModifiedDate();
 
-        WorkerShareStatisticEntity currentWorkerShareStatistics =
+        List<WorkerShareStatisticEntity> workerShareStatistics =
                 workerStatisticRepository.getWorkerShareStatisticsFromDate(poolId, workerName, lastModificationDate);
-        WorkerHashRateStatisticEntity currentWorkerHashRateStatistic =
+        List<WorkerHashRateStatisticEntity> workerHashRateStatistic =
                 workerStatisticRepository.getWorkerHashRateStatisticFromDate(poolId, workerName, lastModificationDate);
-        WorkerPaymentStatisticEntity currentWorkerPaymentStatistic =
+        List<WorkerPaymentStatisticEntity> workerPaymentStatistic =
                 workerStatisticRepository.getWorkerPaymentStatisticFromDate(poolId, workerName, lastModificationDate);
 
-        BigInteger totalAcceptedShares = lastWorkerDailyStatistic.getTotalAcceptedShares().add(currentWorkerShareStatistics.getTotalAcceptedShares());
-        BigInteger totalRejectedShares = lastWorkerDailyStatistic.getTotalRejectedShares().add(currentWorkerShareStatistics.getTotalRejectedShares());
-        lastWorkerDailyStatistic.setTotalAcceptedShares(totalAcceptedShares);
-        lastWorkerDailyStatistic.setTotalRejectedShares(totalRejectedShares);
-        lastWorkerDailyStatistic.setModifiedDate(currentWorkerShareStatistics.getDate());
-        lastWorkerDailyStatistic.setAverageHashRate(currentWorkerHashRateStatistic.getAverageHashRate());
-        lastWorkerDailyStatistic.setTotalPayment(currentWorkerPaymentStatistic.getTotalPayments());
+        List<WorkerStatisticEntity> newWorkerStatisticEntities = new ArrayList<>();
 
-        workerStatisticRepository.update(lastWorkerDailyStatistic);
+        workerStatisticMapper.toWorkerStatistic(workerHashRateStatistic, workerShareStatistics, workerPaymentStatistic).forEach(workerStatisticEntity -> {
+            if (lastSavedWorkerDailyStatistic.getPoolId().equals(workerStatisticEntity.getPoolId())
+                    && lastSavedWorkerDailyStatistic.getWorkerName().equals(workerStatisticEntity.getWorkerName())
+                    && lastSavedWorkerDailyStatistic.getDate().isEqual(workerStatisticEntity.getDate())) {
+
+                BigInteger totalAcceptedShares = lastSavedWorkerDailyStatistic.getTotalAcceptedShares().add(workerStatisticEntity.getTotalAcceptedShares());
+                BigInteger totalRejectedShares = lastSavedWorkerDailyStatistic.getTotalRejectedShares().add(workerStatisticEntity.getTotalRejectedShares());
+                lastSavedWorkerDailyStatistic.setTotalAcceptedShares(totalAcceptedShares);
+                lastSavedWorkerDailyStatistic.setTotalRejectedShares(totalRejectedShares);
+                lastSavedWorkerDailyStatistic.setModifiedDate(workerStatisticEntity.getModifiedDate());
+                lastSavedWorkerDailyStatistic.setAverageHashRate(workerStatisticEntity.getAverageHashRate());
+                lastSavedWorkerDailyStatistic.setTotalPayment(workerStatisticEntity.getTotalPayment());
+
+                workerStatisticRepository.update(lastSavedWorkerDailyStatistic);
+            } else {
+                newWorkerStatisticEntities.add(workerStatisticEntity);
+            }
+        });
+
+        workerStatisticRepository.saveAll(newWorkerStatisticEntities);
     }
 
     private void saveWorkersDailyStatistic() {
