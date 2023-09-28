@@ -345,7 +345,7 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
         return namedParameterJdbcTemplate.query("""
                         SELECT worker,
                                poolid,
-                               MAX(created)                                 AS date,               
+                               date_trunc('day', created)                   AS date,               
                                sum(CASE WHEN isvalid THEN 1 ELSE 0 END)     AS total_valid_shares,
                                sum(CASE WHEN NOT isvalid THEN 1 ELSE 0 END) AS total_invalid_shares,
                                MAX(created)                                 AS modification_date 
