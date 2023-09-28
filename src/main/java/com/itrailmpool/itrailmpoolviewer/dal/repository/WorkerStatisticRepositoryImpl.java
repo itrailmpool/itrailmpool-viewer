@@ -450,14 +450,10 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
     }
 
     private List<WorkerHashRateStatisticEntity> getWorkerHashRateStatistic(String poolId, String workerName, Instant dateFrom) {
-        LocalDate localDateFrom = instantToLocalDate(dateFrom);
-
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         parameters.addValue("poolId", poolId);
         parameters.addValue("workerName", workerName);
-        parameters.addValue("dateFrom",  localDateFrom);
-
-        LOGGER.info("getWorkerHashRateStatistic from {}", localDateFrom);
+        parameters.addValue("dateFrom",  Timestamp.from(dateFrom));
 
         return namedParameterJdbcTemplate.query("""
                         SELECT date,
@@ -466,7 +462,7 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
                                      AVG(m.hashrate)              AS average_hashrate
                               FROM minerstats m
                               WHERE m.poolid = :poolId
-                                AND m.created > :dateFrom
+                                AND m.created > date_trunc('day', (:dateFrom)::timestamptz)
                                 AND m.worker IN (
                                      SELECT w.name || '.' || d.name
                                      FROM workers w
@@ -548,14 +544,9 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
     }
 
     private List<WorkerPaymentStatisticEntity> getWorkerPaymentStatistic(String poolId, String workerName, Instant dateFrom) {
-        LocalDate localDateFrom = instantToLocalDate(dateFrom);
-
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         parameters.addValue("poolId", poolId);
         parameters.addValue("workerName", workerName);
-        parameters.addValue("dateFrom",  localDateFrom);
-
-        LOGGER.info("getWorkerPaymentStatistic from {}", localDateFrom);
 
         return namedParameterJdbcTemplate.query("""
                         SELECT date_trunc('day', p.created) AS date,
@@ -564,7 +555,7 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
                         INNER JOIN miner_settings ms ON p.address = ms.address
                         WHERE p.poolid = :poolId
                             AND ms.workername = :workerName
-                            AND date_trunc ('day', p.created) > :dateFrom
+                            AND date_trunc ('day', p.created) > date_trunc('day', (:dateFrom)::timestamptz)
                         GROUP BY date_trunc('day', p.created)
                         ORDER BY date DESC;""",
                 parameters,
