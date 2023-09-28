@@ -37,7 +37,7 @@ public class WorkerStatisticUpdateJob {
     private boolean shouldRunWorkerDailyStatisticInitialization;
     private boolean isWorkerDailyStatisticInitialized = false;
 
-    @Scheduled(initialDelay = 10, fixedDelay = 10, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(initialDelay = 2, fixedDelay = 10, timeUnit = TimeUnit.MINUTES)
     private void updateWorkerDailyStatistic() {
         if (shouldRunWorkerDailyStatisticInitialization && !isWorkerDailyStatisticInitialized) {
             saveWorkersDailyStatistic();
@@ -89,8 +89,11 @@ public class WorkerStatisticUpdateJob {
                 lastSavedWorkerDailyStatistic.setAverageHashRate(workerStatisticEntity.getAverageHashRate());
                 lastSavedWorkerDailyStatistic.setTotalPayment(workerStatisticEntity.getTotalPayment());
 
+                LOGGER.debug("workerStatisticEntity for update {}", workerStatisticEntity);
+
                 workerStatisticRepository.update(lastSavedWorkerDailyStatistic);
             } else {
+                LOGGER.debug("{}", workerStatisticEntity);
                 newWorkerStatisticEntities.add(workerStatisticEntity);
             }
         });
