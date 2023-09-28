@@ -547,6 +547,7 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         parameters.addValue("poolId", poolId);
         parameters.addValue("workerName", workerName);
+        parameters.addValue("dateFrom",  Timestamp.from(dateFrom));
 
         return namedParameterJdbcTemplate.query("""
                         SELECT date_trunc('day', p.created) AS date,
