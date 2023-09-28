@@ -37,7 +37,7 @@ public class WorkerStatisticUpdateJob {
     private boolean shouldRunWorkerDailyStatisticInitialization;
     private boolean isWorkerDailyStatisticInitialized = false;
 
-    @Scheduled(initialDelay = 2, fixedDelay = 10, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(initialDelay = 1, fixedDelay = 10, timeUnit = TimeUnit.MINUTES)
     private void updateWorkerDailyStatistic() {
         if (shouldRunWorkerDailyStatisticInitialization && !isWorkerDailyStatisticInitialized) {
             saveWorkersDailyStatistic();
