@@ -74,6 +74,10 @@ public class WorkerStatisticUpdateJob {
         List<WorkerPaymentStatisticEntity> workerPaymentStatistic =
                 workerStatisticRepository.getWorkerPaymentStatisticFromDate(poolId, workerName, lastModificationDate);
 
+        workerHashRateStatistic.forEach(w -> {
+            LOGGER.debug("workerHashRateStatistic {}", w);
+        });
+
         List<WorkerStatisticEntity> newWorkerStatisticEntities = new ArrayList<>();
 
         workerStatisticMapper.toWorkerStatistic(workerHashRateStatistic, workerShareStatistics, workerPaymentStatistic).forEach(workerStatisticEntity -> {
