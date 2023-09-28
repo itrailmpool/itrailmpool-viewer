@@ -139,7 +139,7 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
                         .setTotalDevices(totalDevicesCount)
                         .setDevicesOnline(devicesOnline)
                         .setDevicesOffline(devicesOffline)
-                        .setWorkerDevicesStatistic(deviceStatisticMapper.toDeviceStatistic(Collections.emptyList())));//todo: remove empty list after fix performance issue
+                        .setWorkerDevicesStatistic(deviceStatisticMapper.toDeviceStatistic(devicesStatistic)));//todo: remove empty list after fix performance issue
     }
 
     public static String buildPoolWorkerKey(String poolId, String workerName) {
