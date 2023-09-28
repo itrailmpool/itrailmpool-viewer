@@ -75,8 +75,18 @@ public class WorkerStatisticUpdateJob {
                 workerStatisticRepository.getWorkerPaymentStatisticFromDate(poolId, workerName, lastModificationDate);
 
         //TODO: remove this hotfix after issue resolving (row mapper)
-        workerHashRateStatistic.forEach(hashRateStatistic -> hashRateStatistic.setWorkerName(workerName));
-        workerPaymentStatistic.forEach(paymentStatistic -> paymentStatistic.setWorkerName(workerName));
+        workerShareStatistics.forEach(shareStatistics -> {
+            LOGGER.debug("shareStatistics {}", shareStatistics);
+
+        });
+        workerHashRateStatistic.forEach(hashRateStatistic -> {
+            hashRateStatistic.setWorkerName(workerName);
+            LOGGER.debug("hashRateStatistic {}", hashRateStatistic);
+        });
+        workerPaymentStatistic.forEach(paymentStatistic -> {
+            paymentStatistic.setWorkerName(workerName);
+            LOGGER.debug("paymentStatistic {}", paymentStatistic);
+        });
 
         List<WorkerStatisticEntity> newWorkerStatisticEntities = new ArrayList<>();
 
