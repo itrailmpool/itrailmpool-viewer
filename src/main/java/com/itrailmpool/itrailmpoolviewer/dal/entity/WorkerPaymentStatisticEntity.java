@@ -11,4 +11,13 @@ public class WorkerPaymentStatisticEntity {
     private String workerName;
     private Instant date;
     private BigDecimal totalPayments;
+
+    @Override
+    public String toString() {
+        return "WorkerPaymentStatisticEntity{" +
+                "workerName='" + workerName + '\'' +
+                ", date=" + date +
+                ", totalPayments=" + totalPayments +
+                '}';
+    }
 }

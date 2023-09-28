@@ -13,4 +13,17 @@ public class WorkerShareStatisticEntity {
     private BigInteger totalAcceptedShares;
     private BigInteger totalRejectedShares;
     private Instant date;
+    private Instant modifiedDate;
+
+    @Override
+    public String toString() {
+        return "WorkerShareStatisticEntity{" +
+                "poolId='" + poolId + '\'' +
+                ", workerName='" + workerName + '\'' +
+                ", totalAcceptedShares=" + totalAcceptedShares +
+                ", totalRejectedShares=" + totalRejectedShares +
+                ", date=" + date +
+                ", modifiedDate=" + modifiedDate +
+                '}';
+    }
 }

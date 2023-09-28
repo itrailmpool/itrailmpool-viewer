@@ -11,4 +11,13 @@ public class WorkerHashRateStatisticEntity {
     private String workerName;
     private BigDecimal averageHashRate;
     private Instant date;
+
+    @Override
+    public String toString() {
+        return "WorkerHashRateStatisticEntity{" +
+                "workerName='" + workerName + '\'' +
+                ", averageHashRate=" + averageHashRate +
+                ", date=" + date +
+                '}';
+    }
 }
