@@ -14,17 +14,27 @@ import com.itrailmpool.itrailmpoolviewer.exception.MiningPoolViewerException;
 import com.itrailmpool.itrailmpoolviewer.mapper.DeviceStatisticMapper;
 import com.itrailmpool.itrailmpoolviewer.mapper.MiningcoreClientMapper;
 import com.itrailmpool.itrailmpoolviewer.mapper.WorkerStatisticMapper;
+import com.itrailmpool.itrailmpoolviewer.model.DeviceStatisticDto;
+import com.itrailmpool.itrailmpoolviewer.model.WorkerCurrentStatisticDto;
 import com.itrailmpool.itrailmpoolviewer.model.WorkerDevicesStatisticDto;
 import com.itrailmpool.itrailmpoolviewer.model.WorkerPerformanceStatsContainerDto;
 import com.itrailmpool.itrailmpoolviewer.model.WorkerStatisticContainerDto;
+import com.itrailmpool.itrailmpoolviewer.model.WorkerStatisticDto;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
+import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.math.BigDecimal;
+import java.math.BigInteger;
+import java.time.LocalDate;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -34,12 +44,16 @@ import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
+import static org.apache.commons.lang3.StringUtils.isNotEmpty;
+import static org.apache.commons.lang3.StringUtils.startsWithIgnoreCase;
+
 @Service
 @RequiredArgsConstructor
 public class WorkerStatisticServiceImpl implements WorkerStatisticService {
 
     private static final Logger LOGGER = LoggerFactory.getLogger(WorkerStatisticServiceImpl.class);
     private static final String KEY_SPLITTER = ".";
+    private static final Comparator<DeviceStatisticDto> DEFAULT_DEVICE_STATISTIC_COMPARATOR = Comparator.comparing(DeviceStatisticDto::getLastShareDate);
 
     private final MiningcoreClient miningcoreClient;
     private final MinerSettingsRepository minerSettingsRepository;
@@ -53,9 +67,22 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
 
     private volatile Map<String, WorkerStatisticContainerDto> workerStatisticByWorker = new HashMap<>();
 
+    private final Map<String, Comparator<DeviceStatisticDto>> deviceStatisticComparators = Map.of(
+            "devicename", Comparator.comparing(DeviceStatisticDto::getDeviceName),
+            "lastsharedate", Comparator.comparing(DeviceStatisticDto::getLastShareDate),
+            "currenthashrate", Comparator.comparing(DeviceStatisticDto::getCurrentHashRate),
+            "hourlyaveragehashrate", Comparator.comparing(DeviceStatisticDto::getHourlyAverageHashRate),
+            "dailyaveragehashrate", Comparator.comparing(DeviceStatisticDto::getDailyAverageHashRate),
+            "isonline", Comparator.comparing(DeviceStatisticDto::getIsOnline, Comparator.nullsLast(Comparator.naturalOrder()))
+    );
+
     @PostConstruct
     void init() {
         reload();
+    }
+
+    public static String buildPoolWorkerKey(String poolId, String workerName) {
+        return poolId + KEY_SPLITTER + workerName;
     }
 
     @Override
@@ -76,6 +103,24 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
     }
 
     @Override
+    public WorkerCurrentStatisticDto getWorkerCurrentStatistic(String poolId, String workerName) {
+        WorkerStatisticContainerDto workerStatisticContainer = workerStatisticByWorker.get(buildPoolWorkerKey(poolId, workerName));
+
+        if (workerStatisticContainer == null) {
+            return new WorkerCurrentStatisticDto();
+        }
+
+        return new WorkerCurrentStatisticDto()
+                .setWorkerName(workerName)
+                .setCurrentHashRate(workerStatisticContainer.getWorkerHashRate().getCurrentHashRate())
+                .setHourlyAverageHashRate(workerStatisticContainer.getWorkerHashRate().getHourlyAverageHashRate())
+                .setDailyAverageHashRate(workerStatisticContainer.getWorkerHashRate().getDailyAverageHashRate())
+                .setTotalDevices(workerStatisticContainer.getWorkerDevicesStatistic().getTotalDevices())
+                .setDevicesOnline(workerStatisticContainer.getWorkerDevicesStatistic().getDevicesOnline())
+                .setDevicesOffline(workerStatisticContainer.getWorkerDevicesStatistic().getDevicesOffline());
+    }
+
+    @Override
     public List<WorkerPerformanceStatsContainerDto> getWorkerPerformance(String poolId, String workerName) {
         try {
             MinerSettingsEntity minerSettings = minerSettingsRepository.findByPoolIdAndWorkerName(poolId, workerName);
@@ -89,6 +134,49 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
         } catch (Throwable t) {
             throw new MiningPoolViewerException(t);
         }
+    }
+
+    @Override
+    public Page<WorkerStatisticDto> getWorkerStatistic(Pageable pageable, String poolId, String workerName) {
+        WorkerStatisticContainerDto workerStatisticContainer = workerStatisticByWorker.get(buildPoolWorkerKey(poolId, workerName));
+
+        if (workerStatisticContainer == null) {
+            return Page.empty();
+        }
+
+        List<WorkerStatisticDto> workerStatistics = workerStatisticContainer.getWorkerStatistics();
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), workerStatistics.size());
+        return new PageImpl<>(workerStatistics.subList(start, end), pageable, workerStatistics.size());
+    }
+
+    @Override
+    public Page<DeviceStatisticDto> getDeviceStatistics(Pageable pageable, String poolId, String workerName, String deviceName) {
+        WorkerStatisticContainerDto workerStatisticContainer = workerStatisticByWorker.get(buildPoolWorkerKey(poolId, workerName));
+
+        if (workerStatisticContainer == null) {
+            return Page.empty();
+        }
+
+        List<DeviceStatisticDto> devicesStatistics = workerStatisticContainer.getWorkerDevicesStatistic().getWorkerDevicesStatistic();
+
+        if (isNotEmpty(deviceName)) {
+            devicesStatistics = devicesStatistics.stream()
+                    .filter(device -> startsWithIgnoreCase(device.getDeviceName(), deviceName))
+                    .toList();
+        }
+
+        if (pageable.getSort().isSorted()) {
+            Comparator<DeviceStatisticDto> comparator = createComparator(pageable.getSort().toList());
+            devicesStatistics = devicesStatistics.stream()
+                    .sorted(comparator)
+                    .toList();
+        }
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), devicesStatistics.size());
+        return new PageImpl<>(devicesStatistics.subList(start, end), pageable, devicesStatistics.size());
     }
 
     @Scheduled(initialDelay = 5, fixedDelay = 5, timeUnit = TimeUnit.MINUTES)
@@ -142,7 +230,17 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
                         .setWorkerDevicesStatistic(deviceStatisticMapper.toDeviceStatistic(devicesStatistic)));//todo: remove empty list after fix performance issue
     }
 
-    public static String buildPoolWorkerKey(String poolId, String workerName) {
-        return poolId + KEY_SPLITTER + workerName;
+    private Comparator<DeviceStatisticDto> createComparator(List<Sort.Order> orders) {
+        Comparator<DeviceStatisticDto> comparator = null;
+        for (Sort.Order order : orders) {
+            Comparator<DeviceStatisticDto> currentComparator = deviceStatisticComparators.getOrDefault(order.getProperty().toLowerCase(), DEFAULT_DEVICE_STATISTIC_COMPARATOR);
+            if (comparator == null) {
+                comparator = order.isAscending() ? currentComparator : currentComparator.reversed();
+            } else {
+                comparator = order.isAscending() ? comparator.thenComparing(currentComparator) : comparator.thenComparing(currentComparator).reversed();
+            }
+        }
+        return comparator;
     }
+
 }
