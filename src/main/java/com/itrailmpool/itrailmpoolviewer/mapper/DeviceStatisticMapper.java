@@ -34,8 +34,8 @@ public interface DeviceStatisticMapper {
         return deviceStatistics;
     }
 
-    @Mapping(target = "workerName", source = "hashRateStatistic.workerName")
-    @Mapping(target = "deviceName", source = "hashRateStatistic.deviceName")
+    @Mapping(target = "workerName", source = "sharesStatistic.workerName")
+    @Mapping(target = "deviceName", source = "sharesStatistic.deviceName")
     @Mapping(target = "lastShareDate", source = "sharesStatistic.lastValidShareDate")
     @Mapping(target = "isOnline", source = "sharesStatistic.isOnline")
     @Mapping(target = "currentHashRate", source = "hashRateStatistic.currentHashRate", defaultValue = "0")
