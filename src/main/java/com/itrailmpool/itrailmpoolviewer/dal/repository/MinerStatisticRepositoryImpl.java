@@ -61,7 +61,7 @@ public class MinerStatisticRepositoryImpl implements MinerStatisticRepository {
                             FROM minerstats
                             WHERE poolid = :poolId
                               AND miner = :address
-                              AND created >= now() - interval '3 day'
+                              AND created >= now() - interval '1 day'
                               AND created <= now()
                             GROUP BY date_trunc('hour', created), worker
                             ORDER BY created, worker
