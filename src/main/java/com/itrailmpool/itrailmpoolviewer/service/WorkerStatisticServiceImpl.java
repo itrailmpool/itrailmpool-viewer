@@ -162,6 +162,7 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
                 ));
 
         return grouped.entrySet().stream()
+                .sorted(Map.Entry.comparingByKey())
                 .map(entry -> {
                     WorkerPerformanceStatsContainer container = new WorkerPerformanceStatsContainer();
                     container.setCreated(entry.getKey());
