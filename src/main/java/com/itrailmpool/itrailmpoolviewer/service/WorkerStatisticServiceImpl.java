@@ -6,9 +6,11 @@ import com.itrailmpool.itrailmpoolviewer.config.SchedulingConfig;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.DeviceStatisticEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.MinerSettingsEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.WorkerHashRateEntity;
+import com.itrailmpool.itrailmpoolviewer.dal.entity.WorkerPerformanceStatsEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.WorkerStatisticEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.repository.DeviceStatisticRepository;
 import com.itrailmpool.itrailmpoolviewer.dal.repository.MinerSettingsRepository;
+import com.itrailmpool.itrailmpoolviewer.dal.repository.MinerStatisticRepository;
 import com.itrailmpool.itrailmpoolviewer.dal.repository.WorkerStatisticRepository;
 import com.itrailmpool.itrailmpoolviewer.exception.MiningPoolViewerException;
 import com.itrailmpool.itrailmpoolviewer.mapper.DeviceStatisticMapper;
@@ -33,8 +35,8 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
-import java.math.BigInteger;
-import java.time.LocalDate;
+import java.time.Instant;
+import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -59,6 +61,7 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
     private final MinerSettingsRepository minerSettingsRepository;
     private final DeviceStatisticRepository deviceStatisticRepository;
     private final WorkerStatisticRepository workerStatisticRepository;
+    private final MinerStatisticRepository minerStatisticRepository;
     private final WorkerStatisticMapper workerStatisticMapper;
     private final DeviceStatisticMapper deviceStatisticMapper;
     private final MiningcoreClientMapper miningcoreClientMapper;
@@ -128,12 +131,44 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
                 return Collections.emptyList();
             }
 
-            List<WorkerPerformanceStatsContainer> minerPerformance = miningcoreClient.getMinerPerformance(poolId, minerSettings.getAddress());
+            List<WorkerPerformanceStatsEntity> workerPerformance = minerStatisticRepository.getWorkerPerformance(poolId, minerSettings.getAddress(), workerName);
+            List<WorkerPerformanceStatsContainer> workerPerformanceStatsContainers = groupWorkerPerformanceStats(workerPerformance);
 
-            return miningcoreClientMapper.toWorkerPerformanceStatsContainerDto(minerPerformance);
+            return miningcoreClientMapper.toWorkerPerformanceStatsContainerDto(workerPerformanceStatsContainers);
         } catch (Throwable t) {
             throw new MiningPoolViewerException(t);
         }
+    }
+
+    public List<WorkerPerformanceStatsContainer> groupWorkerPerformanceStats(List<WorkerPerformanceStatsEntity> entities) {
+        Map<Instant, Map<String, WorkerPerformanceStatsEntity>> grouped = entities.stream()
+                .collect(Collectors.groupingBy(
+                        e -> e.getCreated().truncatedTo(ChronoUnit.HOURS),
+                        Collectors.toMap(
+                                WorkerPerformanceStatsEntity::getWorkerDeviceKey,
+                                e -> {
+                                    WorkerPerformanceStatsEntity stats = new WorkerPerformanceStatsEntity();
+                                    stats.setHashRate(e.getHashRate());
+                                    stats.setSharesPerSecond(e.getSharesPerSecond());
+                                    return stats;
+                                },
+                                (s1, s2) -> {
+                                    WorkerPerformanceStatsEntity merged = new WorkerPerformanceStatsEntity();
+                                    merged.setHashRate(s1.getHashRate().add(s2.getHashRate()).divide(BigDecimal.valueOf(2)));
+                                    merged.setSharesPerSecond(s1.getSharesPerSecond().add(s2.getSharesPerSecond()).divide(BigDecimal.valueOf(2)));
+                                    return merged;
+                                }
+                        )
+                ));
+
+        return grouped.entrySet().stream()
+                .map(entry -> {
+                    WorkerPerformanceStatsContainer container = new WorkerPerformanceStatsContainer();
+                    container.setCreated(entry.getKey());
+                    container.setWorkers(entry.getValue());
+                    return container;
+                })
+                .toList();
     }
 
     @Override

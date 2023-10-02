@@ -172,7 +172,7 @@ public class DeviceStatisticRepositoryImpl implements DeviceStatisticRepository 
         return deviceStatisticMapper.toDeviceStatisticEntity(deviceSharesStatistics, deviceHashRateStatistics);
     }
 
-    private List<DeviceSharesStatisticEntity> getDeviceSharesStatistics(WorkerEntity worker, List<String> workerDevicesNames) {
+    private List<DeviceSharesStatisticEntity>   getDeviceSharesStatistics(WorkerEntity worker, List<String> workerDevicesNames) {
         Map<String, DeviceSharesStatisticEntity> aggregatedDeviceSharesStatistics = deviceRepository.findByWorkerId(worker.getId()).stream()
                 .map(workerDevice -> {
                     DeviceSharesStatisticEntity deviceSharesStatistic = new DeviceSharesStatisticEntity();
