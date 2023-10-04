@@ -1,15 +1,18 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <configuration>
-    <include resource="org/springframework/boot/logging/logback/base.xml"/>
+    <include resource="org/springframework/boot/logging/logback/defaults.xml"/>
 
-    <!-- Консольный аппендер -->
-    <appender name="STDOUT" class="ch.qos.logback.core.ConsoleAppender">
+    <appender name="CONSOLE" class="ch.qos.logback.core.ConsoleAppender">
+        <filter class="ch.qos.logback.classic.filter.ThresholdFilter">
+            <level>DEBUG</level>
+        </filter>
         <encoder>
-            <pattern>%date %level [%thread] %logger{40} %msg%n</pattern>
+            <pattern>%clr(%d{HH:mm:ss.SSS}){faint} %clr(%-5p) %clr(---){faint}%clr([%15.15t]){faint}%clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n%wEx
+            </pattern>
+            <charset>utf8</charset>
         </encoder>
     </appender>
 
-    <!-- Файловый аппендер -->
     <appender name="FILE" class="ch.qos.logback.core.rolling.RollingFileAppender">
         <file>myapp.log</file>
         <rollingPolicy class="ch.qos.logback.core.rolling.TimeBasedRollingPolicy">
@@ -17,13 +20,21 @@
             <maxHistory>30</maxHistory>
         </rollingPolicy>
         <encoder>
-            <pattern>%date %level [%thread] %logger{40} %msg%n</pattern>
+            <pattern>%clr(%d{HH:mm:ss.SSS}){faint} %clr(%-5p) %clr(---){faint}%clr([%15.15t]){faint}%clr(%-40.40logger{39}){cyan} %clr(:){faint} %m%n%wEx
+            </pattern>
         </encoder>
     </appender>
 
-    <!-- Корневой логгер, который использует оба аппендера -->
-    <root level="INFO">
-        <appender-ref ref="STDOUT" />
-        <appender-ref ref="FILE" />
-    </root>
+    <springProfile name="dev">
+        <root level="DEBUG">
+            <appender-ref ref="CONSOLE"/>
+        </root>
+    </springProfile>
+
+    <springProfile name="test, prod">
+        <root level="INFO">
+            <appender-ref ref="CONSOLE"/>
+            <appender-ref ref="FILE"/>
+        </root>
+    </springProfile>
 </configuration>

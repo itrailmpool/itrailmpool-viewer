@@ -57,7 +57,7 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
 
     @Override
     public WorkerStatisticContainerDto getWorkerStatistic(String poolId, String workerName) {
-        if (schedulingConfig.isEnable()) {
+        if (schedulingConfig.isCacheEnabled()) {
             LOGGER.debug("Scheduling is enable. Get worker statistic from cache");
 
             return workerStatisticByWorker.get(buildPoolWorkerKey(poolId, workerName));
@@ -65,7 +65,7 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
 
         LOGGER.debug("Scheduling is disable. Get worker statistic from database");
 
-        return getWorkerStatistic(poolId, workerName);
+        return getWorkerStatisticData(poolId, workerName);
     }
 
     @Override
@@ -87,6 +87,7 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
                 .map(this::getWorkerStatisticData)
                 .collect(Collectors.toMap(workerStatistic ->
                         buildPoolWorkerKey(workerStatistic.getPoolId(), workerStatistic.getWorkerName()), Function.identity()));
+        LOGGER.info("WorkerStatistic cache reloaded");
     }
 
     private WorkerStatisticContainerDto getWorkerStatisticData(MinerSettingsEntity minerSettings) {
@@ -96,6 +97,7 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
     private WorkerStatisticContainerDto getWorkerStatisticData(String poolId, String workerName) {
         List<DeviceStatisticEntity> devicesStatistic = deviceStatisticRepository.getWorkerDevicesStatistic(poolId, workerName);
         WorkerHashRateEntity workerHashRateEntity = workerStatisticRepository.getWorkerHashRate(poolId, workerName);
+
         List<WorkerStatisticEntity> workerStatistic  = workerStatisticRepository.getWorkerStatistic(poolId, workerName).stream()
                 .sorted(Comparator.comparing(WorkerStatisticEntity::getDate).reversed())
                 .toList();

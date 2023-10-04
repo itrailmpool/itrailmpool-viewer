@@ -1,11 +1,11 @@
 package com.itrailmpool.itrailmpoolviewer.controller;
 
-import com.itrailmpool.itrailmpoolviewer.model.Block;
+import com.itrailmpool.itrailmpoolviewer.model.BlockDto;
 import com.itrailmpool.itrailmpoolviewer.model.MinerPerformanceStatsDto;
 import com.itrailmpool.itrailmpoolviewer.model.MinerStatisticDto;
-import com.itrailmpool.itrailmpoolviewer.model.Payment;
-import com.itrailmpool.itrailmpoolviewer.model.PoolResponseDto;
-import com.itrailmpool.itrailmpoolviewer.model.PoolStatisticResponse;
+import com.itrailmpool.itrailmpoolviewer.model.PaymentDto;
+import com.itrailmpool.itrailmpoolviewer.model.PoolContainerDto;
+import com.itrailmpool.itrailmpoolviewer.model.PoolStatisticContainerDto;
 import com.itrailmpool.itrailmpoolviewer.model.WorkerPerformanceStatsContainerDto;
 import com.itrailmpool.itrailmpoolviewer.model.WorkerStatisticContainerDto;
 import com.itrailmpool.itrailmpoolviewer.service.PoolStatisticService;
@@ -29,26 +29,26 @@ public class PoolStatisticController {
     private final WorkerStatisticService workerStatisticService;
 
     @GetMapping()
-    public PoolResponseDto getPools() {
+    public PoolContainerDto getPools() {
         return poolStatisticService.getPools();
     }
 
     @GetMapping(value = "/{poolId}/performance")
-    public PoolStatisticResponse getPoolPerformance(@PathVariable String poolId) {
+    public PoolStatisticContainerDto getPoolPerformance(@PathVariable String poolId) {
         return poolStatisticService.getPoolPerformance(poolId);
     }
 
     @GetMapping(value = "/{poolId}/blocks")
-    public List<Block> getBlocks(@PathVariable String poolId,
-                                 @RequestParam(defaultValue = "0") int page,
-                                 @RequestParam(defaultValue = "100") int size) {
+    public List<BlockDto> getBlocks(@PathVariable String poolId,
+                                    @RequestParam(defaultValue = "0") int page,
+                                    @RequestParam(defaultValue = "100") int size) {
         return poolStatisticService.getBlocks(poolId, page, size);
     }
 
     @GetMapping(value = "/{poolId}/payments")
-    public List<Payment> getPayments(@PathVariable String poolId,
-                                     @RequestParam(defaultValue = "0") int page,
-                                     @RequestParam(defaultValue = "100") int size) {
+    public List<PaymentDto> getPayments(@PathVariable String poolId,
+                                        @RequestParam(defaultValue = "0") int page,
+                                        @RequestParam(defaultValue = "100") int size) {
         return poolStatisticService.getPayments(poolId, page, size);
     }
 

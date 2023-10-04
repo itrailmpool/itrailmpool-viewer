@@ -1,12 +1,14 @@
 package com.itrailmpool.itrailmpoolviewer.client;
 
+import com.itrailmpool.itrailmpoolviewer.client.model.Block;
+import com.itrailmpool.itrailmpoolviewer.client.model.MinerPerformanceStats;
 import com.itrailmpool.itrailmpoolviewer.client.model.MinerStatisticResponse;
+import com.itrailmpool.itrailmpoolviewer.client.model.Payment;
 import com.itrailmpool.itrailmpoolviewer.client.model.PoolResponse;
+import com.itrailmpool.itrailmpoolviewer.client.model.PoolStatisticResponse;
 import com.itrailmpool.itrailmpoolviewer.client.model.WorkerPerformanceStatsContainer;
-import com.itrailmpool.itrailmpoolviewer.model.Block;
-import com.itrailmpool.itrailmpoolviewer.model.MinerPerformanceStatsDto;
-import com.itrailmpool.itrailmpoolviewer.model.Payment;
-import com.itrailmpool.itrailmpoolviewer.model.PoolStatisticResponse;
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
 import org.springframework.core.ParameterizedTypeReference;
 import org.springframework.http.HttpMethod;
@@ -20,6 +22,8 @@ import java.util.List;
 
 @Service
 public class MiningcoreClient {
+
+    private static final Logger LOGGER = LoggerFactory.getLogger(MiningcoreClient.class);
 
     private final RestTemplate restTemplate;
     private final String primaryUrl;
@@ -44,9 +48,12 @@ public class MiningcoreClient {
 
             return response.getBody();
         } catch (RestClientException e) {
-            builder.replacePath(secondaryUrl + "pools");
+            LOGGER.warn("Primary client invoke exception: {}", e.getMessage());
+            UriComponentsBuilder secondaryBuilder = UriComponentsBuilder
+                    .fromHttpUrl(secondaryUrl)
+                    .pathSegment("pools");
             ResponseEntity<PoolResponse> response =
-                    restTemplate.exchange(builder.toUriString(), HttpMethod.GET, null, new ParameterizedTypeReference<>() {
+                    restTemplate.exchange(secondaryBuilder.toUriString(), HttpMethod.GET, null, new ParameterizedTypeReference<>() {
                     });
 
             return response.getBody();
@@ -64,9 +71,12 @@ public class MiningcoreClient {
 
             return response.getBody();
         } catch (RestClientException e) {
-            builder.replacePath(secondaryUrl + "pools/" + poolId + "/performance");
+            LOGGER.warn("Primary client invoke exception: {}", e.getMessage());
+            UriComponentsBuilder secondaryBuilder = UriComponentsBuilder
+                    .fromHttpUrl(secondaryUrl)
+                    .pathSegment("pools", poolId, "performance");
             ResponseEntity<PoolStatisticResponse> response =
-                    restTemplate.exchange(builder.toUriString(), HttpMethod.GET, null, new ParameterizedTypeReference<>() {
+                    restTemplate.exchange(secondaryBuilder.toUriString(), HttpMethod.GET, null, new ParameterizedTypeReference<>() {
                     });
 
             return response.getBody();
@@ -84,9 +94,12 @@ public class MiningcoreClient {
 
             return response.getBody();
         } catch (RestClientException e) {
-            builder.replacePath(secondaryUrl + "pools/" + poolId + "/miners/" + address);
+            LOGGER.warn("Primary client invoke exception: {}", e.getMessage());
+            UriComponentsBuilder secondaryBuilder = UriComponentsBuilder
+                    .fromHttpUrl(secondaryUrl)
+                    .pathSegment("pools", poolId, "miners", address);
             ResponseEntity<MinerStatisticResponse> response =
-                    restTemplate.exchange(builder.toUriString(), HttpMethod.GET, null, new ParameterizedTypeReference<>() {
+                    restTemplate.exchange(secondaryBuilder.toUriString(), HttpMethod.GET, null, new ParameterizedTypeReference<>() {
                     });
 
             return response.getBody();
@@ -104,31 +117,39 @@ public class MiningcoreClient {
 
             return response.getBody();
         } catch (RestClientException e) {
-            builder.replacePath(secondaryUrl + "pools/" + poolId + "/miners/" + address + "/performance");
+            LOGGER.warn("Primary client invoke exception: {}", e.getMessage());
+            UriComponentsBuilder secondaryBuilder = UriComponentsBuilder
+                    .fromHttpUrl(secondaryUrl)
+                    .pathSegment("pools", poolId, "miners", address, "performance");
             ResponseEntity<List<WorkerPerformanceStatsContainer>> response =
-                    restTemplate.exchange(builder.toUriString(), HttpMethod.GET, null, new ParameterizedTypeReference<>() {
+                    restTemplate.exchange(secondaryBuilder.toUriString(), HttpMethod.GET, null, new ParameterizedTypeReference<>() {
                     });
 
             return response.getBody();
         }
     }
 
-    public List<MinerPerformanceStatsDto> getMiners(String poolId, int page, int size) {
+    public List<MinerPerformanceStats> getMiners(String poolId, int page, int size) {
         UriComponentsBuilder builder = UriComponentsBuilder
                 .fromHttpUrl(primaryUrl)
                 .pathSegment("pools", poolId, "miners")
                 .queryParam("page", page)
                 .queryParam("pageSize", size);
         try {
-            ResponseEntity<List<MinerPerformanceStatsDto>> response =
+            ResponseEntity<List<MinerPerformanceStats>> response =
                     restTemplate.exchange(builder.toUriString(), HttpMethod.GET, null, new ParameterizedTypeReference<>() {
                     });
 
             return response.getBody();
         } catch (RestClientException e) {
-            builder.replacePath(secondaryUrl + "pools/" + poolId + "/miners");
-            ResponseEntity<List<MinerPerformanceStatsDto>> response =
-                    restTemplate.exchange(builder.toUriString(), HttpMethod.GET, null, new ParameterizedTypeReference<>() {
+            LOGGER.warn("Primary client invoke exception: {}", e.getMessage());
+            UriComponentsBuilder secondaryBuilder = UriComponentsBuilder
+                    .fromHttpUrl(secondaryUrl)
+                    .pathSegment("pools", poolId, "miners")
+                    .queryParam("page", page)
+                    .queryParam("pageSize", size);
+            ResponseEntity<List<MinerPerformanceStats>> response =
+                    restTemplate.exchange(secondaryBuilder.toUriString(), HttpMethod.GET, null, new ParameterizedTypeReference<>() {
                     });
 
             return response.getBody();
@@ -149,9 +170,14 @@ public class MiningcoreClient {
 
             return response.getBody();
         } catch (RestClientException e) {
-            builder.replacePath(secondaryUrl + "pools/" + poolId + "/blocks");
+            LOGGER.warn("Primary client invoke exception: {}", e.getMessage());
+            UriComponentsBuilder secondaryBuilder = UriComponentsBuilder
+                    .fromHttpUrl(secondaryUrl)
+                    .pathSegment("pools", poolId, "blocks")
+                    .queryParam("page", page)
+                    .queryParam("pageSize", size);
             ResponseEntity<List<Block>> response =
-                    restTemplate.exchange(builder.toUriString(), HttpMethod.GET, null, new ParameterizedTypeReference<>() {
+                    restTemplate.exchange(secondaryBuilder.toUriString(), HttpMethod.GET, null, new ParameterizedTypeReference<>() {
                     });
 
             return response.getBody();
@@ -171,9 +197,14 @@ public class MiningcoreClient {
 
             return response.getBody();
         } catch (RestClientException e) {
-            builder.replacePath(secondaryUrl + "pools/" + poolName + "/payments");
+            LOGGER.warn("Primary client invoke exception: {}", e.getMessage());
+            UriComponentsBuilder secondaryBuilder = UriComponentsBuilder
+                    .fromHttpUrl(secondaryUrl)
+                    .pathSegment("pools", poolName, "payments")
+                    .queryParam("page", page)
+                    .queryParam("pageSize", size);
             ResponseEntity<List<Payment>> response =
-                    restTemplate.exchange(builder.toUriString(), HttpMethod.GET, null, new ParameterizedTypeReference<>() {
+                    restTemplate.exchange(secondaryBuilder.toUriString(), HttpMethod.GET, null, new ParameterizedTypeReference<>() {
                     });
 
             return response.getBody();

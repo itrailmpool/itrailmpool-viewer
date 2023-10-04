@@ -1,17 +1,21 @@
 package com.itrailmpool.itrailmpoolviewer.service;
 
 import com.itrailmpool.itrailmpoolviewer.client.MiningcoreClient;
+import com.itrailmpool.itrailmpoolviewer.client.model.Block;
+import com.itrailmpool.itrailmpoolviewer.client.model.MinerPerformanceStats;
 import com.itrailmpool.itrailmpoolviewer.client.model.MinerStatisticResponse;
+import com.itrailmpool.itrailmpoolviewer.client.model.Payment;
 import com.itrailmpool.itrailmpoolviewer.client.model.PoolInfo;
+import com.itrailmpool.itrailmpoolviewer.client.model.PoolStatisticResponse;
 import com.itrailmpool.itrailmpoolviewer.client.model.WorkerPerformanceStatsContainer;
 import com.itrailmpool.itrailmpoolviewer.dal.repository.DeviceStatisticRepository;
 import com.itrailmpool.itrailmpoolviewer.mapper.MiningcoreClientMapper;
-import com.itrailmpool.itrailmpoolviewer.model.Block;
+import com.itrailmpool.itrailmpoolviewer.model.BlockDto;
 import com.itrailmpool.itrailmpoolviewer.model.MinerPerformanceStatsDto;
 import com.itrailmpool.itrailmpoolviewer.model.MinerStatisticDto;
-import com.itrailmpool.itrailmpoolviewer.model.Payment;
-import com.itrailmpool.itrailmpoolviewer.model.PoolResponseDto;
-import com.itrailmpool.itrailmpoolviewer.model.PoolStatisticResponse;
+import com.itrailmpool.itrailmpoolviewer.model.PaymentDto;
+import com.itrailmpool.itrailmpoolviewer.model.PoolContainerDto;
+import com.itrailmpool.itrailmpoolviewer.model.PoolStatisticContainerDto;
 import com.itrailmpool.itrailmpoolviewer.model.WorkerPerformanceStatsContainerDto;
 import lombok.RequiredArgsConstructor;
 import org.springframework.stereotype.Service;
@@ -27,7 +31,7 @@ public class PoolStatisticServiceImpl implements PoolStatisticService {
     private final MiningcoreClientMapper miningcoreClientMapper;
 
     @Override
-    public PoolResponseDto getPools() {
+    public PoolContainerDto getPools() {
         var pools = miningcoreClient.getPools();
         pools.getPools().forEach(this::updateConnectedMiners);
 
@@ -35,18 +39,24 @@ public class PoolStatisticServiceImpl implements PoolStatisticService {
     }
 
     @Override
-    public PoolStatisticResponse getPoolPerformance(String poolId) {
-        return miningcoreClient.getPoolPerformance(poolId);
+    public PoolStatisticContainerDto getPoolPerformance(String poolId) {
+        PoolStatisticResponse poolPerformance = miningcoreClient.getPoolPerformance(poolId);
+
+        return miningcoreClientMapper.toPoolStatisticContainerDto(poolPerformance);
     }
 
     @Override
-    public List<Block> getBlocks(String poolId, int page, int size) {
-        return miningcoreClient.getBlocks(poolId, page, size);
+    public List<BlockDto> getBlocks(String poolId, int page, int size) {
+        List<Block> blocks = miningcoreClient.getBlocks(poolId, page, size);
+
+        return miningcoreClientMapper.toBlockDto(blocks);
     }
 
     @Override
-    public List<Payment> getPayments(String poolId, int page, int size) {
-        return miningcoreClient.getPayments(poolId, page, size);
+    public List<PaymentDto> getPayments(String poolId, int page, int size) {
+        List<Payment> payments = miningcoreClient.getPayments(poolId, page, size);
+
+        return miningcoreClientMapper.toPaymentDto(payments);
     }
 
     @Override
@@ -65,7 +75,9 @@ public class PoolStatisticServiceImpl implements PoolStatisticService {
 
     @Override
     public List<MinerPerformanceStatsDto> getMiners(String poolId, int page, int size) {
-        return miningcoreClient.getMiners(poolId, page, size);
+        List<MinerPerformanceStats> miners = miningcoreClient.getMiners(poolId, page, size);
+
+        return miningcoreClientMapper.toMinerPerformanceStatsDto(miners);
     }
 
     private void updateConnectedMiners(PoolInfo pool) {

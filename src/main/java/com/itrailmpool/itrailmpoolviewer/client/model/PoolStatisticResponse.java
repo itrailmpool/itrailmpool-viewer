@@ -1,4 +1,4 @@
-package com.itrailmpool.itrailmpoolviewer.model;
+package com.itrailmpool.itrailmpoolviewer.client.model;
 
 import lombok.Data;
 

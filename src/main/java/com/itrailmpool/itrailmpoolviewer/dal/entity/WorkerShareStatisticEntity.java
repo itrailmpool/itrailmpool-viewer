@@ -8,6 +8,7 @@ import java.time.Instant;
 @Data
 public class WorkerShareStatisticEntity {
 
+    private String poolId;
     private String workerName;
     private BigInteger totalAcceptedShares;
     private BigInteger totalRejectedShares;

@@ -10,14 +10,12 @@ import static com.itrailmpool.itrailmpoolviewer.config.ApplicationConfig.DEFAULT
 import static com.itrailmpool.itrailmpoolviewer.config.ApplicationConfig.UTC_TIMEZONE;
 
 @Data
-public class Payment {
-
-    private String coin;
-    private String address;
-    private String addressInfoLink;
-    private BigDecimal aAmount;
-    private String transactionConfirmationData;
-    private String transactionInfoLink;
+public class AggregatedPoolStatsDto {
+    private BigDecimal poolHashrate;
+    private Integer connectedMiners;
+    private Integer validSharesPerSecond;
+    private BigDecimal networkHashrate;
+    private BigDecimal networkDifficulty;
     @JsonFormat(shape = JsonFormat.Shape.STRING, pattern = DEFAULT_DATA_FORMAT_PATTERN, timezone = UTC_TIMEZONE)
     private Instant created;
 }
