@@ -46,6 +46,7 @@ public interface WorkerStatisticMapper {
     }
 
     @Mapping(target = "date", source = "shareStatistic.date", qualifiedByName = "instantToLocalDate")
+    @Mapping(target = "modifiedDate", source = "shareStatistic.modifiedDate")
     @Mapping(target = "averageHashRate", expression = "java( toAverageHashRate(hashRateStatistic) )")
     @Mapping(target = "workerName", source = "shareStatistic.workerName")
     @Mapping(target = "poolId", source = "shareStatistic.poolId")

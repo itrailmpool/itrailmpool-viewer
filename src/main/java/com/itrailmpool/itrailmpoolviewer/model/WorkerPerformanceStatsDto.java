@@ -7,6 +7,6 @@ import java.math.BigDecimal;
 @Data
 public class WorkerPerformanceStatsDto {
 
-    private BigDecimal hashrate;
+    private BigDecimal hashRate;
     private BigDecimal sharesPerSecond;
 }

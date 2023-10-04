@@ -2,9 +2,12 @@ package com.itrailmpool.itrailmpoolviewer.dal.repository;
 
 import com.itrailmpool.itrailmpoolviewer.dal.entity.AverageWorkerStatisticEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.MinerStatisticEntity;
+import com.itrailmpool.itrailmpoolviewer.dal.entity.WorkerPerformanceStatsEntity;
 import lombok.RequiredArgsConstructor;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
+import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
+import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
 import java.time.Instant;
@@ -16,8 +19,10 @@ public class MinerStatisticRepositoryImpl implements MinerStatisticRepository {
 
     private static final RowMapper<MinerStatisticEntity> MINER_STATISTIC_ROW_MAPPER = getMinerStatisticRowMapper();
     private static final RowMapper<AverageWorkerStatisticEntity> AVERAGE_WORKER_STATISTIC_ROW_MAPPER = getAverageWorkerStatisticRowMapper();
+    private static final RowMapper<WorkerPerformanceStatsEntity> WORKER_PERFORMANCE_STATISTIC_ROW_MAPPER = getWorkerPerformanceStatsEntityRowMapper();
 
     private final JdbcTemplate jdbcTemplate;
+    private final NamedParameterJdbcTemplate namedParameterJdbcTemplate;
 
     @Override
     public List<AverageWorkerStatisticEntity> getWorkerAverageHashRateAfterDate(String worker, List<String> workerDevices, Instant dateFrom) {
@@ -40,6 +45,33 @@ public class MinerStatisticRepositoryImpl implements MinerStatisticRepository {
                 dateFrom);
     }
 
+    @Override
+    public List<WorkerPerformanceStatsEntity> getWorkerPerformance(String poolId, String address, String workerName) {
+        MapSqlParameterSource parameters = new MapSqlParameterSource();
+        parameters.addValue("poolId", poolId);
+        parameters.addValue("address", address);
+        parameters.addValue("workerNameLike", workerName + "%");
+
+        return namedParameterJdbcTemplate.query("""
+                        WITH statsByaddress AS (
+                            SELECT worker,
+                                   date_trunc('hour', created) AS created,
+                                   AVG(hashrate)               AS hashrate,
+                                   AVG(sharespersecond)        AS sharespersecond
+                            FROM minerstats
+                            WHERE poolid = :poolId
+                              AND miner = :address
+                              AND created >= now() - interval '1 day'
+                              AND created <= now()
+                            GROUP BY date_trunc('hour', created), worker
+                            ORDER BY created, worker
+                        )
+                        SELECT * FROM statsByaddress
+                        WHERE worker LIKE :workerNameLike;""",
+                parameters,
+                WORKER_PERFORMANCE_STATISTIC_ROW_MAPPER);
+    }
+
     private static RowMapper<MinerStatisticEntity> getMinerStatisticRowMapper() {
         return (resultSet, i) -> {
             MinerStatisticEntity minerStatistic = new MinerStatisticEntity();
@@ -52,6 +84,19 @@ public class MinerStatisticRepositoryImpl implements MinerStatisticRepository {
             minerStatistic.setCreated(resultSet.getTimestamp("created").toInstant());
 
             return minerStatistic;
+        };
+    }
+
+    private static RowMapper<WorkerPerformanceStatsEntity> getWorkerPerformanceStatsEntityRowMapper() {
+        return (resultSet, i) -> {
+            WorkerPerformanceStatsEntity workerPerformanceStats = new WorkerPerformanceStatsEntity();
+
+            workerPerformanceStats.setWorkerDeviceKey(resultSet.getString("worker"));
+            workerPerformanceStats.setHashRate(resultSet.getBigDecimal("hashrate"));
+            workerPerformanceStats.setSharesPerSecond(resultSet.getBigDecimal("sharespersecond"));
+            workerPerformanceStats.setCreated(resultSet.getTimestamp("created").toInstant());
+
+            return workerPerformanceStats;
         };
     }
 

@@ -3,7 +3,8 @@
                    xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance"
                    xsi:schemaLocation="http://www.liquibase.org/xml/ns/dbchangelog http://www.liquibase.org/xml/ns/dbchangelog/dbchangelog-3.8.xsd">
 
-    <include file="init/changelog.xml" relativeToChangelogFile="true"/>
-    <include file="update/changelog.xml" relativeToChangelogFile="true"/>
+    <changeSet id="update/001_worker_daily_statistic_add_modification_date" author="dmitry_kuksa">
+        <sqlFile encoding="utf8" path="001_worker_daily_statistic_add_modification_date.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
 
 </databaseChangeLog>
