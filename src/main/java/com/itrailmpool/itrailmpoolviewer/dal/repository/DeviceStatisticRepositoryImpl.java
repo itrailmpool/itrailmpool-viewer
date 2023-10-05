@@ -109,7 +109,7 @@ public class DeviceStatisticRepositoryImpl implements DeviceStatisticRepository 
                 DEVICE_ENTITY_ROW_MAPPER);
     }
 
-    @Scheduled(initialDelay = 60, fixedDelay = 60, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(initialDelay = 15, fixedDelay = 15, timeUnit = TimeUnit.MINUTES)
     public void reloadWorkerDevicesNames() {
         LOGGER.info("WorkerDevicesNames cache reloading");
         try {
