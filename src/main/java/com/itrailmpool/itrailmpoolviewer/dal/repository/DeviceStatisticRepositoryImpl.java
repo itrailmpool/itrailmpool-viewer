@@ -96,6 +96,7 @@ public class DeviceStatisticRepositoryImpl implements DeviceStatisticRepository 
                         WHERE s.worker = :worker
                           AND s.created > now() - interval '1 hour'
                           AND s.poolid = :poolid
+                          AND s.isvalid = true
                         GROUP BY s.device, w.id""",
                 parameters,
                 DEVICE_ENTITY_ROW_MAPPER);
