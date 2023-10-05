@@ -7,7 +7,6 @@ import com.itrailmpool.itrailmpoolviewer.dal.entity.DeviceStatisticEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.WorkerEntity;
 import com.itrailmpool.itrailmpoolviewer.mapper.DeviceStatisticMapper;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.collections4.MapUtils;
 import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
@@ -16,15 +15,11 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Repository;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
-import java.sql.Timestamp;
 import java.time.Instant;
-import java.time.ZoneId;
-import java.time.ZonedDateTime;
-import java.time.format.DateTimeFormatter;
 import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.Collections;
@@ -33,13 +28,10 @@ import java.util.HashSet;
 import java.util.List;
 import java.util.Map;
 import java.util.Set;
-import java.util.concurrent.TimeUnit;
 import java.util.function.Function;
 import java.util.stream.Collectors;
 
-import static com.itrailmpool.itrailmpoolviewer.config.ApplicationConfig.DEFAULT_DATA_FORMAT_PATTERN;
 import static com.itrailmpool.itrailmpoolviewer.dal.repository.DeviceRepositoryImpl.DEVICE_ENTITY_ROW_MAPPER;
-import static com.itrailmpool.itrailmpoolviewer.service.WorkerStatisticServiceImpl.buildPoolWorkerKey;
 
 @Repository
 @RequiredArgsConstructor
@@ -109,55 +101,32 @@ public class DeviceStatisticRepositoryImpl implements DeviceStatisticRepository 
                 DEVICE_ENTITY_ROW_MAPPER);
     }
 
-    @Scheduled(initialDelay = 15, fixedDelay = 15, timeUnit = TimeUnit.MINUTES)
-    public void reloadWorkerDevicesNames() {
-        LOGGER.info("WorkerDevicesNames cache reloading");
-        try {
-            transactionTemplate.executeWithoutResult(status -> {
-                Map<String, List<String>> initDevicesNamesByWorkerMap = new HashMap<>();
-                workerRepository.findAll().forEach(worker ->
-                        initDevicesNamesByWorkerMap.put(
-                                buildPoolWorkerKey(worker.getPoolId(), worker.getName()),
-                                findWorkerDevicesNames(worker.getName(), worker.getPoolId())));
-                devicesNamesByWorker = initDevicesNamesByWorkerMap;
-            });
-        } catch (Throwable e) {
-            LOGGER.error("Unable to reload worker devices names", e);
-        }
-        LOGGER.info("WorkerDevicesNames cache reloaded");
-    }
-
     private List<String> findWorkerDevicesNames(String workerName, String poolId) {
-        if (MapUtils.isNotEmpty(devicesNamesByWorker)) {
-            String poolWorkerKey = buildPoolWorkerKey(poolId, workerName);
+        WorkerEntity worker = workerRepository.findByNameAndPoolId(workerName, poolId);
 
-            return devicesNamesByWorker.get(poolWorkerKey);
-        } else {
-            WorkerEntity worker = workerRepository.findByNameAndPoolId(workerName, poolId);
-
-            if (worker == null) {
-                return Collections.emptyList();
-            }
-
-            List<String> devicesNames = deviceRepository.findByWorkerId(worker.getId()).stream()
-                    .map(DeviceEntity::getName)
-                    .toList();
-            List<String> devicesFromSharesStatistic = findDevicesFromShareStatistic(workerName, poolId).stream()
-                    .map(DeviceEntity::getName)
-                    .toList();
-
-            Set<String> workerDevicesNames = new HashSet<>();
-            workerDevicesNames.addAll(devicesNames);
-            workerDevicesNames.addAll(devicesFromSharesStatistic);
-
-            LOGGER.debug("Worker's {} devices: [{}]", workerName, StringUtils.join(workerDevicesNames, ", "));
-
-            return new ArrayList<>(workerDevicesNames);
+        if (worker == null) {
+            return Collections.emptyList();
         }
+
+        List<String> devicesNames = deviceRepository.findByWorkerId(worker.getId()).stream()
+                .map(DeviceEntity::getName)
+                .toList();
+        List<String> devicesFromSharesStatistic = findDevicesFromShareStatistic(workerName, poolId).stream()
+                .map(DeviceEntity::getName)
+                .toList();
+
+        Set<String> workerDevicesNames = new HashSet<>();
+        workerDevicesNames.addAll(devicesNames);
+        workerDevicesNames.addAll(devicesFromSharesStatistic);
+
+        LOGGER.debug("Worker's {} devices: [{}]", workerName, StringUtils.join(workerDevicesNames, ", "));
+
+        return new ArrayList<>(workerDevicesNames);
     }
 
 
     @Override
+    @Transactional
     public List<DeviceStatisticEntity> getWorkerDevicesStatistic(String poolId, String workerName) {
         List<String> workerDevicesNames = findWorkerDevicesNames(workerName, poolId);
         WorkerEntity worker = workerRepository.findByNameAndPoolId(workerName, poolId);
@@ -172,7 +141,7 @@ public class DeviceStatisticRepositoryImpl implements DeviceStatisticRepository 
         return deviceStatisticMapper.toDeviceStatisticEntity(deviceSharesStatistics, deviceHashRateStatistics);
     }
 
-    private List<DeviceSharesStatisticEntity>   getDeviceSharesStatistics(WorkerEntity worker, List<String> workerDevicesNames) {
+    private List<DeviceSharesStatisticEntity> getDeviceSharesStatistics(WorkerEntity worker, List<String> workerDevicesNames) {
         Map<String, DeviceSharesStatisticEntity> aggregatedDeviceSharesStatistics = deviceRepository.findByWorkerId(worker.getId()).stream()
                 .map(workerDevice -> {
                     DeviceSharesStatisticEntity deviceSharesStatistic = new DeviceSharesStatisticEntity();
