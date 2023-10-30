@@ -7,7 +7,6 @@ import com.itrailmpool.itrailmpoolviewer.dal.entity.WorkerShareStatisticEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.WorkerStatisticEntity;
 import com.itrailmpool.itrailmpoolviewer.mapper.WorkerStatisticMapper;
 import lombok.RequiredArgsConstructor;
-import org.apache.commons.collections4.ListUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.beans.factory.annotation.Value;
@@ -247,7 +246,7 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
                             FROM worker_daily_statistic
                             WHERE poolid = :poolId AND workername = :workerName
                             ORDER BY date DESC
-                            LIMIT 1;""",
+                            LIMIT 1 FOR UPDATE;""",
                     parameters,
                     WORKER_STATISTIC_ROW_MAPPER);
         } catch (EmptyResultDataAccessException e) {
@@ -457,7 +456,7 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         parameters.addValue("poolId", poolId);
         parameters.addValue("workerName", workerName);
-        parameters.addValue("dateFrom",  Timestamp.from(dateFrom));
+        parameters.addValue("dateFrom", Timestamp.from(dateFrom));
 
         return namedParameterJdbcTemplate.query("""
                         SELECT date,
@@ -551,7 +550,7 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
         MapSqlParameterSource parameters = new MapSqlParameterSource();
         parameters.addValue("poolId", poolId);
         parameters.addValue("workerName", workerName);
-        parameters.addValue("dateFrom",  Timestamp.from(dateFrom));
+        parameters.addValue("dateFrom", Timestamp.from(dateFrom));
 
         return namedParameterJdbcTemplate.query("""
                         SELECT date_trunc('day', p.created) AS date,
@@ -560,7 +559,7 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
                         INNER JOIN miner_settings ms ON p.address = ms.address
                         WHERE p.poolid = :poolId
                             AND ms.workername = :workerName
-                            AND date_trunc ('day', p.created) > date_trunc('day', (:dateFrom)::timestamptz)
+                            AND date_trunc ('day', p.created) = date_trunc('day', (:dateFrom)::timestamptz)
                         GROUP BY date_trunc('day', p.created)
                         ORDER BY date DESC;""",
                 parameters,

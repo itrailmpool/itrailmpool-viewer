@@ -94,6 +94,13 @@ public class PoolStatisticController {
         return workerStatisticService.getWorkerStatistic(pageable, poolId, workerName);
     }
 
+    @GetMapping(value = "/{poolId}/workers/{workerName}/payments")
+    public Page<PaymentDto> getWorkerPayments(Pageable pageable,
+                                              @PathVariable String poolId,
+                                              @PathVariable String workerName) {
+        return workerStatisticService.getWorkerPayments(pageable, poolId, workerName);
+    }
+
     @GetMapping(value = "/{poolId}/workers/{workerName}/devices")
     public Page<DeviceStatisticDto> getDeviceStatistics(Pageable pageable,
                                                         @PathVariable String poolId,

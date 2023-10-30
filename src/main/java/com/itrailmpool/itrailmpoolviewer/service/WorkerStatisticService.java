@@ -1,6 +1,7 @@
 package com.itrailmpool.itrailmpoolviewer.service;
 
 import com.itrailmpool.itrailmpoolviewer.model.DeviceStatisticDto;
+import com.itrailmpool.itrailmpoolviewer.model.PaymentDto;
 import com.itrailmpool.itrailmpoolviewer.model.WorkerCurrentStatisticDto;
 import com.itrailmpool.itrailmpoolviewer.model.WorkerPerformanceStatsContainerDto;
 import com.itrailmpool.itrailmpoolviewer.model.WorkerStatisticContainerDto;
@@ -19,6 +20,8 @@ public interface WorkerStatisticService {
     List<WorkerPerformanceStatsContainerDto> getWorkerPerformance(String poolId, String workerName);
 
     Page<WorkerStatisticDto> getWorkerStatistic(Pageable pageable, String poolId, String workerName);
+
+    Page<PaymentDto> getWorkerPayments(Pageable pageable, String poolId, String workerName);
 
     Page<DeviceStatisticDto> getDeviceStatistics(Pageable pageable, String poolId, String workerName, String deviceName);
 }

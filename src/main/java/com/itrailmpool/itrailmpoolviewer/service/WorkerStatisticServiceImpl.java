@@ -5,18 +5,22 @@ import com.itrailmpool.itrailmpoolviewer.client.model.WorkerPerformanceStatsCont
 import com.itrailmpool.itrailmpoolviewer.config.SchedulingConfig;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.DeviceStatisticEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.MinerSettingsEntity;
+import com.itrailmpool.itrailmpoolviewer.dal.entity.PaymentEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.WorkerHashRateEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.WorkerPerformanceStatsEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.WorkerStatisticEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.repository.DeviceStatisticRepository;
 import com.itrailmpool.itrailmpoolviewer.dal.repository.MinerSettingsRepository;
 import com.itrailmpool.itrailmpoolviewer.dal.repository.MinerStatisticRepository;
+import com.itrailmpool.itrailmpoolviewer.dal.repository.PaymentRepository;
 import com.itrailmpool.itrailmpoolviewer.dal.repository.WorkerStatisticRepository;
 import com.itrailmpool.itrailmpoolviewer.exception.MiningPoolViewerException;
 import com.itrailmpool.itrailmpoolviewer.mapper.DeviceStatisticMapper;
 import com.itrailmpool.itrailmpoolviewer.mapper.MiningcoreClientMapper;
+import com.itrailmpool.itrailmpoolviewer.mapper.PaymentMapper;
 import com.itrailmpool.itrailmpoolviewer.mapper.WorkerStatisticMapper;
 import com.itrailmpool.itrailmpoolviewer.model.DeviceStatisticDto;
+import com.itrailmpool.itrailmpoolviewer.model.PaymentDto;
 import com.itrailmpool.itrailmpoolviewer.model.WorkerCurrentStatisticDto;
 import com.itrailmpool.itrailmpoolviewer.model.WorkerDevicesStatisticDto;
 import com.itrailmpool.itrailmpoolviewer.model.WorkerPerformanceStatsContainerDto;
@@ -57,7 +61,6 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
     private static final String KEY_SPLITTER = ".";
     private static final Comparator<DeviceStatisticDto> DEFAULT_DEVICE_STATISTIC_COMPARATOR = Comparator.comparing(DeviceStatisticDto::getLastShareDate);
 
-    private final MiningcoreClient miningcoreClient;
     private final MinerSettingsRepository minerSettingsRepository;
     private final DeviceStatisticRepository deviceStatisticRepository;
     private final WorkerStatisticRepository workerStatisticRepository;
@@ -67,6 +70,8 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
     private final MiningcoreClientMapper miningcoreClientMapper;
     private final SchedulingConfig schedulingConfig;
     private final TransactionTemplate transactionTemplate;
+    private final PaymentRepository paymentRepository;
+    private final PaymentMapper paymentMapper;
 
     private volatile Map<String, WorkerStatisticContainerDto> workerStatisticByWorker = new HashMap<>();
 
@@ -185,6 +190,20 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
         int start = (int) pageable.getOffset();
         int end = Math.min((start + pageable.getPageSize()), workerStatistics.size());
         return new PageImpl<>(workerStatistics.subList(start, end), pageable, workerStatistics.size());
+    }
+
+    @Override
+    public Page<PaymentDto> getWorkerPayments(Pageable pageable, String poolId, String workerName) {
+        List<PaymentDto> workerPayments =
+                paymentMapper.toPaymentDto(paymentRepository.findByPoolIdAndWorkerName(poolId, workerName));
+
+        if (workerPayments.isEmpty()) {
+            return Page.empty();
+        }
+
+        int start = (int) pageable.getOffset();
+        int end = Math.min((start + pageable.getPageSize()), workerPayments.size());
+        return new PageImpl<>(workerPayments.subList(start, end), pageable, workerPayments.size());
     }
 
     @Override
