@@ -16,9 +16,11 @@ import org.springframework.beans.factory.annotation.Value;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.math.BigDecimal;
 import java.math.BigInteger;
 import java.time.Instant;
 import java.time.LocalDate;
+import java.time.temporal.ChronoUnit;
 import java.util.ArrayList;
 import java.util.List;
 import java.util.concurrent.TimeUnit;
@@ -65,7 +67,9 @@ public class WorkerStatisticUpdateJob {
 
     private void updateWorkerDailyStatistic(String poolId, String workerName) {
         WorkerStatisticEntity lastSavedWorkerDailyStatistic = workerStatisticRepository.getLastWorkerDailyStatistic(poolId, workerName);
-        Instant lastModificationDate = lastSavedWorkerDailyStatistic.getModifiedDate();
+        Instant lastModificationDate = lastSavedWorkerDailyStatistic == null ?
+                Instant.now().minus(1, ChronoUnit.HOURS) :
+                lastSavedWorkerDailyStatistic.getModifiedDate();
 
         List<WorkerShareStatisticEntity> workerShareStatistics =
                 workerStatisticRepository.getWorkerShareStatisticsFromDate(poolId, workerName, lastModificationDate);
@@ -91,7 +95,8 @@ public class WorkerStatisticUpdateJob {
         List<WorkerStatisticEntity> newWorkerStatisticEntities = new ArrayList<>();
 
         workerStatisticMapper.toWorkerStatistic(workerHashRateStatistic, workerShareStatistics, workerPaymentStatistic).forEach(workerStatisticEntity -> {
-            if (lastSavedWorkerDailyStatistic.getPoolId().equals(workerStatisticEntity.getPoolId())
+            if (lastSavedWorkerDailyStatistic != null
+                    && lastSavedWorkerDailyStatistic.getPoolId().equals(workerStatisticEntity.getPoolId())
                     && lastSavedWorkerDailyStatistic.getWorkerName().equals(workerStatisticEntity.getWorkerName())
                     && lastSavedWorkerDailyStatistic.getDate().isEqual(workerStatisticEntity.getDate())) {
 
