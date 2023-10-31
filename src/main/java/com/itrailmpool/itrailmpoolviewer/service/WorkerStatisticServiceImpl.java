@@ -1,11 +1,9 @@
 package com.itrailmpool.itrailmpoolviewer.service;
 
-import com.itrailmpool.itrailmpoolviewer.client.MiningcoreClient;
 import com.itrailmpool.itrailmpoolviewer.client.model.WorkerPerformanceStatsContainer;
 import com.itrailmpool.itrailmpoolviewer.config.SchedulingConfig;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.DeviceStatisticEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.MinerSettingsEntity;
-import com.itrailmpool.itrailmpoolviewer.dal.entity.PaymentEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.WorkerHashRateEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.WorkerPerformanceStatsEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.WorkerStatisticEntity;
@@ -28,6 +26,8 @@ import com.itrailmpool.itrailmpoolviewer.model.WorkerStatisticContainerDto;
 import com.itrailmpool.itrailmpoolviewer.model.WorkerStatisticDto;
 import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
+import org.apache.commons.csv.CSVFormat;
+import org.apache.commons.csv.CSVPrinter;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -38,8 +38,11 @@ import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.support.TransactionTemplate;
 
+import java.io.IOException;
+import java.io.StringWriter;
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
 import java.util.Collections;
 import java.util.Comparator;
@@ -60,6 +63,7 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
     private static final Logger LOGGER = LoggerFactory.getLogger(WorkerStatisticServiceImpl.class);
     private static final String KEY_SPLITTER = ".";
     private static final Comparator<DeviceStatisticDto> DEFAULT_DEVICE_STATISTIC_COMPARATOR = Comparator.comparing(DeviceStatisticDto::getLastShareDate);
+    private static final String[] WORKER_STATISTIC_CSV_HEADERS = {"workerName", "date", "averageHashRate", "totalAcceptedShares", "totalRejectedShares", "totalPayment"};
 
     private final MinerSettingsRepository minerSettingsRepository;
     private final DeviceStatisticRepository deviceStatisticRepository;
@@ -232,6 +236,44 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
         int start = (int) pageable.getOffset();
         int end = Math.min((start + pageable.getPageSize()), devicesStatistics.size());
         return new PageImpl<>(devicesStatistics.subList(start, end), pageable, devicesStatistics.size());
+    }
+
+    @Override
+    public String getWorkerStatisticCsv(String poolId, String workerName, LocalDate startDate, LocalDate endDate) {
+        List<WorkerStatisticEntity> workerStatistics = workerStatisticRepository.getWorkerStatisticBetweenDates(poolId, workerName, startDate, endDate);
+
+        return buildCsv(workerStatistics);
+    }
+
+    private String buildCsv(List<WorkerStatisticEntity> workerStatistics) {
+        try (StringWriter writer = new StringWriter()) {
+
+            CSVFormat csvFormat = CSVFormat.DEFAULT.builder()
+                    .setHeader(WORKER_STATISTIC_CSV_HEADERS)
+                    .build();
+
+            try (CSVPrinter printer = new CSVPrinter(writer, csvFormat)) {
+                workerStatistics.forEach(workerStat -> {
+                    try {
+                        printer.printRecord(
+                                workerStat.getWorkerName(),
+                                workerStat.getDate(),
+                                workerStat.getAverageHashRate(),
+                                workerStat.getTotalAcceptedShares(),
+                                workerStat.getTotalRejectedShares(),
+                                workerStat.getTotalPayment()
+                        );
+                    } catch (IOException e) {
+                        throw new MiningPoolViewerException(e);
+                    }
+                });
+            }
+
+            return writer.toString();
+        } catch (Exception e) {
+            LOGGER.error("Unable create csv file", e);
+            throw new MiningPoolViewerException(e);
+        }
     }
 
     @Scheduled(initialDelay = 5, fixedDelay = 5, timeUnit = TimeUnit.MINUTES)

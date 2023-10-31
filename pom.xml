@@ -30,6 +30,7 @@
         <lombok-mapstruct-binding.version>0.2.0</lombok-mapstruct-binding.version>
         <httpcore5.version>5.2</httpcore5.version>
         <google.guava.version>32.1.2-jre</google.guava.version>
+        <org.apache.commons.csv.version>1.10.0</org.apache.commons.csv.version>
 
     </properties>
 
@@ -105,6 +106,12 @@
             <artifactId>httpclient5</artifactId>
             <version>${httpclient5.version}</version>
         </dependency>
+        <dependency>
+            <groupId>org.apache.commons</groupId>
+            <artifactId>commons-csv</artifactId>
+            <version>${org.apache.commons.csv.version}</version>
+        </dependency>
+
     </dependencies>
 
     <build>

@@ -16,6 +16,8 @@ public interface WorkerStatisticRepository {
 
     List<WorkerStatisticEntity> getWorkerStatisticFromDate(String poolId, String workerName, LocalDate dateFrom);
 
+    List<WorkerStatisticEntity> getWorkerStatisticBetweenDates(String poolId, String workerName, LocalDate dateFrom, LocalDate dateTo);
+
     WorkerHashRateEntity getWorkerHashRate(String poolId, String workerName);
 
     LocalDate getLastWorkerDailyStatisticDate();
