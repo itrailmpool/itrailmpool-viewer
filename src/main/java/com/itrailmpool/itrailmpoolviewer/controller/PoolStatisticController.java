@@ -103,8 +103,16 @@ public class PoolStatisticController {
     @GetMapping(value = "/{poolId}/workers/{workerName}/statistics/csv", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<byte[]> getWorkerStatisticCsv(@PathVariable String poolId,
                                                         @PathVariable String workerName,
-                                                        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
-                                                        @RequestParam @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+                                                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+                                                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        if (startDate == null) {
+            startDate = LocalDate.now().minusMonths(3);
+        }
+
+        if (endDate == null) {
+            endDate = LocalDate.now();
+        }
+
         String csv = workerStatisticService.getWorkerStatisticCsv(poolId, workerName, startDate, endDate);
         String fileName = String.format("%s-statistics-%s-to-%s.csv", workerName, startDate, endDate);
         HttpHeaders headers = new HttpHeaders();
