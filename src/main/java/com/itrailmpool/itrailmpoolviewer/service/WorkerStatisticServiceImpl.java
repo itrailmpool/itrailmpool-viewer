@@ -248,8 +248,9 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
     private String buildCsv(List<WorkerStatisticEntity> workerStatistics) {
         try (StringWriter writer = new StringWriter()) {
 
-            CSVFormat csvFormat = CSVFormat.DEFAULT.builder()
+            CSVFormat csvFormat = CSVFormat.EXCEL.builder()
                     .setHeader(WORKER_STATISTIC_CSV_HEADERS)
+                    .setDelimiter(";")
                     .build();
 
             try (CSVPrinter printer = new CSVPrinter(writer, csvFormat)) {
