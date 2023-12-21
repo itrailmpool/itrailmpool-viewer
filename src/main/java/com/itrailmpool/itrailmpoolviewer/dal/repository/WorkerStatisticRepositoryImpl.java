@@ -132,6 +132,34 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
     }
 
     @Override
+    public List<WorkerStatisticEntity> getWorkerStatisticBetweenDates(String poolId, String workerName, LocalDate dateFrom, LocalDate dateTo) {
+        if (dateFrom == null) {
+            dateFrom = getMinWorkerDailyStatisticDate();
+        }
+
+        if (dateTo == null) {
+            dateTo = LocalDate.now();
+        }
+
+        MapSqlParameterSource parameters = new MapSqlParameterSource();
+        parameters.addValue("poolId", poolId);
+        parameters.addValue("workerName", workerName);
+        parameters.addValue("dateFrom", dateFrom);
+        parameters.addValue("dateTo", dateTo);
+
+        return namedParameterJdbcTemplate.query("""
+                        SELECT *
+                        FROM worker_daily_statistic
+                        WHERE 
+                            poolid = :poolId AND 
+                            workername = :workerName AND 
+                            date BETWEEN :dateFrom AND :dateTo
+                        ORDER BY date DESC;""",
+                parameters,
+                WORKER_STATISTIC_ROW_MAPPER);
+    }
+
+    @Override
     public WorkerHashRateEntity getWorkerHashRate(String poolId, String workerName) {
         try {
             MapSqlParameterSource parameters = new MapSqlParameterSource();

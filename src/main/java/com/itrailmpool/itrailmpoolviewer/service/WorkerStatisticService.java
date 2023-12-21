@@ -9,6 +9,7 @@ import com.itrailmpool.itrailmpoolviewer.model.WorkerStatisticDto;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
 
+import java.time.LocalDate;
 import java.util.List;
 
 public interface WorkerStatisticService {
@@ -24,4 +25,6 @@ public interface WorkerStatisticService {
     Page<PaymentDto> getWorkerPayments(Pageable pageable, String poolId, String workerName);
 
     Page<DeviceStatisticDto> getDeviceStatistics(Pageable pageable, String poolId, String workerName, String deviceName);
+
+    String getWorkerStatisticCsv(String poolId, String workerName, LocalDate startDate, LocalDate endDate);
 }

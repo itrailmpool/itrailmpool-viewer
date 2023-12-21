@@ -15,13 +15,19 @@ import com.itrailmpool.itrailmpoolviewer.service.WorkerStatisticService;
 import lombok.RequiredArgsConstructor;
 import org.springframework.data.domain.Page;
 import org.springframework.data.domain.Pageable;
+import org.springframework.format.annotation.DateTimeFormat;
+import org.springframework.http.ContentDisposition;
+import org.springframework.http.HttpHeaders;
 import org.springframework.http.MediaType;
+import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
 
+import java.nio.charset.StandardCharsets;
+import java.time.LocalDate;
 import java.util.List;
 
 @RestController()
@@ -92,6 +98,32 @@ public class PoolStatisticController {
                                                        @PathVariable String poolId,
                                                        @PathVariable String workerName) {
         return workerStatisticService.getWorkerStatistic(pageable, poolId, workerName);
+    }
+
+    @GetMapping(value = "/{poolId}/workers/{workerName}/statistics/csv", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public ResponseEntity<byte[]> getWorkerStatisticCsv(@PathVariable String poolId,
+                                                        @PathVariable String workerName,
+                                                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate startDate,
+                                                        @RequestParam(required = false) @DateTimeFormat(iso = DateTimeFormat.ISO.DATE) LocalDate endDate) {
+        if (startDate == null) {
+            startDate = LocalDate.now().minusMonths(3);
+        }
+
+        if (endDate == null) {
+            endDate = LocalDate.now();
+        }
+
+        String csv = workerStatisticService.getWorkerStatisticCsv(poolId, workerName, startDate, endDate);
+        String fileName = String.format("%s-statistics-%s-to-%s.csv", workerName, startDate, endDate);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentDisposition(ContentDisposition.builder("attachment")
+                .filename(fileName)
+                .build());
+        headers.add(HttpHeaders.CONTENT_TYPE, "text/csv");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(csv.getBytes(StandardCharsets.UTF_8));
     }
 
     @GetMapping(value = "/{poolId}/workers/{workerName}/payments")
