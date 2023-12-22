@@ -5,8 +5,12 @@ import com.fasterxml.jackson.databind.MapperFeature;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.json.JsonMapper;
 import com.fasterxml.jackson.datatype.jsr310.JavaTimeModule;
+import com.itrailmpool.itrailmpoolviewer.client.rpc.javabitcoindrpcclient.BitcoinJSONRPCClient;
+import com.itrailmpool.itrailmpoolviewer.client.rpc.javabitcoindrpcclient.BitcoindRpcClient;
+import org.apache.hc.core5.net.URIBuilder;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Value;
 import org.springframework.context.annotation.Bean;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.context.annotation.EnableAspectJAutoProxy;
@@ -23,6 +27,9 @@ import org.springframework.web.client.RestTemplate;
 import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.net.MalformedURLException;
+import java.net.URI;
+import java.net.URISyntaxException;
 import java.nio.charset.StandardCharsets;
 import java.util.stream.Collectors;
 
@@ -82,4 +89,11 @@ public class ApplicationConfig {
         }
     }
 
+    @Bean
+    public BitcoindRpcClient bitcoindRpcClient(@Value("${bitcoin.public.node.url}") String bitcoinClientUrl) throws URISyntaxException, MalformedURLException {
+        URI uri = new URIBuilder(bitcoinClientUrl)
+                .build();
+
+        return new BitcoinJSONRPCClient(uri.toURL());
+    }
 }

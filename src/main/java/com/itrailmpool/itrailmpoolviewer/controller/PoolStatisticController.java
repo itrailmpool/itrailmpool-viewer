@@ -7,6 +7,7 @@ import com.itrailmpool.itrailmpoolviewer.model.MinerStatisticDto;
 import com.itrailmpool.itrailmpoolviewer.model.PaymentDto;
 import com.itrailmpool.itrailmpoolviewer.model.PoolContainerDto;
 import com.itrailmpool.itrailmpoolviewer.model.PoolStatisticContainerDto;
+import com.itrailmpool.itrailmpoolviewer.model.TransactionDto;
 import com.itrailmpool.itrailmpoolviewer.model.WorkerCurrentStatisticDto;
 import com.itrailmpool.itrailmpoolviewer.model.WorkerPerformanceStatsContainerDto;
 import com.itrailmpool.itrailmpoolviewer.model.WorkerStatisticDto;
@@ -60,6 +61,13 @@ public class PoolStatisticController {
                                         @RequestParam(defaultValue = "0") int page,
                                         @RequestParam(defaultValue = "100") int size) {
         return poolStatisticService.getPayments(poolId, page, size);
+    }
+
+    @GetMapping(value = "/{poolId}/transactions")
+    public List<TransactionDto> getTransactions(@PathVariable String poolId,
+                                                @RequestParam(defaultValue = "0") int page,
+                                                @RequestParam(defaultValue = "100") int size) {
+        return poolStatisticService.getTransactions(poolId, page, size);
     }
 
     @GetMapping(value = "/{poolId}/miners/{address}")

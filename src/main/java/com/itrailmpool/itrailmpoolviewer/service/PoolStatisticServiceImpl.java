@@ -8,19 +8,27 @@ import com.itrailmpool.itrailmpoolviewer.client.model.Payment;
 import com.itrailmpool.itrailmpoolviewer.client.model.PoolInfo;
 import com.itrailmpool.itrailmpoolviewer.client.model.PoolStatisticResponse;
 import com.itrailmpool.itrailmpoolviewer.client.model.WorkerPerformanceStatsContainer;
+import com.itrailmpool.itrailmpoolviewer.dal.entity.TransactionEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.repository.DeviceStatisticRepository;
+import com.itrailmpool.itrailmpoolviewer.dal.repository.TransactionRepository;
 import com.itrailmpool.itrailmpoolviewer.exception.MiningPoolViewerException;
 import com.itrailmpool.itrailmpoolviewer.mapper.MiningcoreClientMapper;
+import com.itrailmpool.itrailmpoolviewer.mapper.TransactionMapper;
 import com.itrailmpool.itrailmpoolviewer.model.BlockDto;
 import com.itrailmpool.itrailmpoolviewer.model.MinerPerformanceStatsDto;
 import com.itrailmpool.itrailmpoolviewer.model.MinerStatisticDto;
 import com.itrailmpool.itrailmpoolviewer.model.PaymentDto;
 import com.itrailmpool.itrailmpoolviewer.model.PoolContainerDto;
 import com.itrailmpool.itrailmpoolviewer.model.PoolStatisticContainerDto;
+import com.itrailmpool.itrailmpoolviewer.model.TransactionDto;
 import com.itrailmpool.itrailmpoolviewer.model.WorkerPerformanceStatsContainerDto;
 import lombok.RequiredArgsConstructor;
+import org.springframework.data.domain.Page;
+import org.springframework.data.domain.PageImpl;
+import org.springframework.data.domain.Pageable;
 import org.springframework.stereotype.Service;
 
+import java.util.Collections;
 import java.util.List;
 
 @Service
@@ -30,6 +38,8 @@ public class PoolStatisticServiceImpl implements PoolStatisticService {
     private final MiningcoreClient miningcoreClient;
     private final DeviceStatisticRepository deviceStatisticRepository;
     private final MiningcoreClientMapper miningcoreClientMapper;
+    private final TransactionRepository transactionRepository;
+    private final TransactionMapper transactionMapper;
 
     @Override
     public PoolContainerDto getPools() {
@@ -74,6 +84,30 @@ public class PoolStatisticServiceImpl implements PoolStatisticService {
         } catch (Throwable t) {
             throw new MiningPoolViewerException(t);
         }
+    }
+
+    @Override
+    public Page<TransactionDto> getTransactions(Pageable pageable, String poolId) {
+        List<TransactionEntity> transactionEntities = transactionRepository.findAllByPoolId(poolId, pageable.getPageNumber(), pageable.getPageSize());
+        List<TransactionDto> transactions = transactionMapper.toTransactionDto(transactionEntities);
+
+        if (transactions.isEmpty()) {
+            return Page.empty();
+        }
+
+        return new PageImpl<>(transactions);
+    }
+
+    @Override
+    public List<TransactionDto> getTransactions(String poolId, int page, int size) {
+        List<TransactionEntity> transactionEntities = transactionRepository.findAllByPoolId(poolId, page, size);
+        List<TransactionDto> transactions = transactionMapper.toTransactionDto(transactionEntities);
+
+        if (transactions.isEmpty()) {
+            return Collections.emptyList();
+        }
+
+        return transactions;
     }
 
     @Override

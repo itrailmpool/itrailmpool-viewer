@@ -7,6 +7,8 @@ import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
 import org.springframework.stereotype.Repository;
 
+import java.sql.Timestamp;
+import java.time.Instant;
 import java.util.List;
 
 @Repository
@@ -28,6 +30,36 @@ public class PaymentRepositoryImpl implements PaymentRepository {
                         WHERE p.poolid = :poolId
                           AND ms.workername = :workerName
                         ORDER BY p.created DESC ;""",
+                parameters,
+                getPaymentEntityRowMapper());
+    }
+
+    @Override
+    public List<PaymentEntity> findByPoolIdAndCreatedDateAfter(String poolId, Instant date) {
+        MapSqlParameterSource parameters = new MapSqlParameterSource();
+        parameters.addValue("poolId", poolId);
+        parameters.addValue("created", Timestamp.from(date));
+
+        return namedParameterJdbcTemplate.query("""
+                        SELECT *
+                        FROM payments p
+                        WHERE p.poolid = :poolId
+                          AND p.created > :created
+                        ORDER BY p.created DESC;""",
+                parameters,
+                getPaymentEntityRowMapper());
+    }
+
+    @Override
+    public List<PaymentEntity> findByPoolId(String poolId) {
+        MapSqlParameterSource parameters = new MapSqlParameterSource();
+        parameters.addValue("poolId", poolId);
+
+        return namedParameterJdbcTemplate.query("""
+                        SELECT *
+                        FROM payments p
+                        WHERE p.poolid = :poolId
+                        ORDER BY p.created DESC;""",
                 parameters,
                 getPaymentEntityRowMapper());
     }
