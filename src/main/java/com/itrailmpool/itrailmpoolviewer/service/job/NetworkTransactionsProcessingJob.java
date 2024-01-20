@@ -19,6 +19,7 @@ import org.springframework.transaction.support.TransactionTemplate;
 
 import java.math.BigDecimal;
 import java.time.Instant;
+import java.util.Comparator;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -39,7 +40,7 @@ public class NetworkTransactionsProcessingJob {
     private final TransactionDetailsMapper transactionDetailsMapper;
 
 
-    @Scheduled(initialDelay = 1, fixedDelay = 30, timeUnit = TimeUnit.MINUTES)
+    @Scheduled(initialDelay = 1, fixedDelay = 10, timeUnit = TimeUnit.MINUTES)
     private void runNetworkTransactionsProcessingJob() {
         LOGGER.info("New transactions processing started");
 
@@ -64,7 +65,9 @@ public class NetworkTransactionsProcessingJob {
             Map<String, PaymentEntity> distinctPayments = new HashMap<>();
             payments.forEach(payment -> distinctPayments.putIfAbsent(payment.getTransactionConfirmationData(), payment));
 
-            distinctPayments.values().forEach(this::processTransaction);
+            distinctPayments.values().stream()
+                    .sorted(Comparator.comparing(PaymentEntity::getCreatedDate))
+                    .forEach(this::processTransaction);
         } catch (Throwable e) {
             LOGGER.error("New transactions processing exception: {}", e.getMessage(), e);
         }

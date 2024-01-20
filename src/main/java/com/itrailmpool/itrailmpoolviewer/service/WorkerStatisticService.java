@@ -27,4 +27,6 @@ public interface WorkerStatisticService {
     Page<DeviceStatisticDto> getDeviceStatistics(Pageable pageable, String poolId, String workerName, String deviceName);
 
     String getWorkerStatisticCsv(String poolId, String workerName, LocalDate startDate, LocalDate endDate);
+
+    String getWorkerTransactionStatisticCsv(String poolId, String workerName, String address);
 }

@@ -148,4 +148,21 @@ public class PoolStatisticController {
                                                         @RequestParam(value = "deviceName", required = false) String deviceName) {
         return workerStatisticService.getDeviceStatistics(pageable, poolId, workerName, deviceName);
     }
+
+    @GetMapping(value = "/{poolId}/workers/{workerName}/statistics/{address}/csv", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    public ResponseEntity<byte[]> getTransactionStatisticCsv(@PathVariable String poolId,
+                                                        @PathVariable String workerName,
+                                                        @PathVariable String address) {
+        String csv = workerStatisticService.getWorkerTransactionStatisticCsv(poolId, workerName, address);
+        String fileName = String.format("%s-statistics.csv", address);
+        HttpHeaders headers = new HttpHeaders();
+        headers.setContentDisposition(ContentDisposition.builder("attachment")
+                .filename(fileName)
+                .build());
+        headers.add(HttpHeaders.CONTENT_TYPE, "text/csv");
+
+        return ResponseEntity.ok()
+                .headers(headers)
+                .body(csv.getBytes(StandardCharsets.UTF_8));
+    }
 }

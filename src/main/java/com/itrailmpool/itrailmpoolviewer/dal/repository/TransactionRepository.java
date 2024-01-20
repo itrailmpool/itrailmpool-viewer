@@ -12,5 +12,7 @@ public interface TransactionRepository {
 
     List<TransactionEntity> findAllByPoolId(String poolId, int pageNumber, int pageSize);
 
+    TransactionEntity findAllByHash(String hash);
+
     Long insert(TransactionEntity transaction);
 }

@@ -6,16 +6,13 @@ import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.RowMapper;
-import org.springframework.jdbc.core.namedparam.BeanPropertySqlParameterSource;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
-import org.springframework.jdbc.core.namedparam.SqlParameterSource;
 import org.springframework.jdbc.support.GeneratedKeyHolder;
 import org.springframework.jdbc.support.KeyHolder;
 import org.springframework.stereotype.Repository;
 
 import java.sql.Timestamp;
-import java.sql.Types;
 import java.util.List;
 
 @Repository
@@ -76,6 +73,27 @@ public class TransactionRepositoryImpl implements TransactionRepository {
                         LIMIT :pageSize OFFSET :pageNumber * :pageSize;""",
                 parameters,
                 getTransactionEntityRowMapper());
+    }
+
+    @Override
+    public TransactionEntity findAllByHash(String hash) {
+        try {
+            MapSqlParameterSource parameters = new MapSqlParameterSource();
+            parameters.addValue("hash", hash);
+
+            return namedParameterJdbcTemplate.queryForObject("""
+                        SELECT *
+                        FROM transactions
+                        WHERE hash = :hash
+                        ORDER BY creation_date DESC
+                        LIMIT 1;""",
+                    parameters,
+                    getTransactionEntityRowMapper());
+        } catch (EmptyResultDataAccessException e) {
+            LOGGER.debug("TransactionEntity for hash {} not found", hash);
+
+            return null;
+        }
     }
 
     @Override

@@ -4,6 +4,7 @@ import com.itrailmpool.itrailmpoolviewer.dal.entity.TransactionDetailsEntity;
 import lombok.RequiredArgsConstructor;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
+import org.springframework.dao.EmptyResultDataAccessException;
 import org.springframework.jdbc.core.RowMapper;
 import org.springframework.jdbc.core.namedparam.MapSqlParameterSource;
 import org.springframework.jdbc.core.namedparam.NamedParameterJdbcTemplate;
@@ -33,6 +34,29 @@ public class TransactionDetailsRepositoryImpl implements TransactionDetailsRepos
                         ORDER BY id DESC;""",
                 parameters,
                 getTransactionDetailsEntityRowMapper());
+    }
+
+    @Override
+    public TransactionDetailsEntity findByTransactionIdAndAddress(Long transactionId, String address) {
+        try {
+            MapSqlParameterSource parameters = new MapSqlParameterSource();
+            parameters.addValue("transaction_id", transactionId);
+            parameters.addValue("address", address);
+
+            return namedParameterJdbcTemplate.queryForObject("""
+                            SELECT *
+                            FROM transaction_details
+                            WHERE transaction_id = :transaction_id
+                             AND address = :address
+                            ORDER BY id DESC
+                            LIMIT 1;""",
+                    parameters,
+                    getTransactionDetailsEntityRowMapper());
+        } catch (EmptyResultDataAccessException e) {
+            LOGGER.debug("TransactionDetailsEntity for transactionId {} and address {} not found", transactionId, address);
+
+            return null;
+        }
     }
 
     @Override

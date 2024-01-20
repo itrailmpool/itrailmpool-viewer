@@ -8,5 +8,7 @@ public interface TransactionDetailsRepository {
 
     List<TransactionDetailsEntity> findTransactionDetails(Long transactionId);
 
+    TransactionDetailsEntity findByTransactionIdAndAddress(Long transactionId, String address);
+
     void insert(List<TransactionDetailsEntity> transactionDetailsEntities);
 }

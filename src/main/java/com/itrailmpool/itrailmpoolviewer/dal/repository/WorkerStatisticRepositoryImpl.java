@@ -114,12 +114,7 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
 
     @Override
     public List<WorkerStatisticEntity> getWorkerStatistic(String poolId, String workerName) {
-//        LocalDate lastWorkerDailyStatisticDate = getLastWorkerDailyStatisticDate();
-
-        List<WorkerStatisticEntity> workerDailyStatistic = getWorkerDailyStatistic(poolId, workerName, null, null);
-//        List<WorkerStatisticEntity> workerStatisticFromDate = getWorkerStatisticFromDate(poolId, workerName, lastWorkerDailyStatisticDate);
-
-        return workerDailyStatistic;
+        return getWorkerDailyStatistic(poolId, workerName, null, null);
     }
 
     @Override
@@ -561,14 +556,14 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
         parameters.addValue("workerName", workerName);
 
         return namedParameterJdbcTemplate.query("""
-                        SELECT date_trunc('day', p.created) AS date,
-                               SUM(p.amount)                AS total_payments
-                        FROM payments p
-                        INNER JOIN miner_settings ms ON p.address = ms.address
-                        WHERE p.poolid = :poolId
-                            AND ms.workername = :workerName
-                            AND date_trunc ('day', p.created) = date_trunc('day', now())
-                        GROUP BY date_trunc('day', p.created)
+                        SELECT date_trunc('day', rwp.data) AS date,
+                               SUM(rwp.amount)             AS total_payments
+                        FROM reports.rep_worker_payments rwp
+                                 INNER JOIN public.workers w on w.id = rwp.worker_id
+                        WHERE w.poolid = :poolId
+                          AND w.name = :workerName
+                          AND date_trunc('day', rwp.data) = date_trunc('day', now())
+                        GROUP BY date_trunc('day', rwp.data)
                         ORDER BY date DESC;""",
                 parameters,
                 WORKER_PAYMENT_STATISTIC_ROW_MAPPER);
@@ -581,14 +576,14 @@ public class WorkerStatisticRepositoryImpl implements WorkerStatisticRepository 
         parameters.addValue("dateFrom", Timestamp.from(dateFrom));
 
         return namedParameterJdbcTemplate.query("""
-                        SELECT date_trunc('day', p.created) AS date,
-                               SUM(p.amount)                AS total_payments
-                        FROM payments p
-                        INNER JOIN miner_settings ms ON p.address = ms.address
-                        WHERE p.poolid = :poolId
-                            AND ms.workername = :workerName
-                            AND date_trunc ('day', p.created) = date_trunc('day', (:dateFrom)::timestamptz)
-                        GROUP BY date_trunc('day', p.created)
+                        SELECT date_trunc('day', rwp.data) AS date,
+                               SUM(rwp.amount)             AS total_payments
+                        FROM reports.rep_worker_payments rwp
+                                 INNER JOIN public.workers w on w.id = rwp.worker_id
+                        WHERE w.poolid = :poolId
+                          AND w.name = :workerName
+                          AND date_trunc('day', rwp.data) >= date_trunc('day', (:dateFrom)::timestamptz)
+                        GROUP BY date_trunc('day', rwp.data)
                         ORDER BY date DESC;""",
                 parameters,
                 WORKER_PAYMENT_STATISTIC_ROW_MAPPER);

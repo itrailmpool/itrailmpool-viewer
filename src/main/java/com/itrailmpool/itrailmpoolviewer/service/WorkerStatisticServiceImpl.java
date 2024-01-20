@@ -4,6 +4,8 @@ import com.itrailmpool.itrailmpoolviewer.client.model.WorkerPerformanceStatsCont
 import com.itrailmpool.itrailmpoolviewer.config.SchedulingConfig;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.DeviceStatisticEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.MinerSettingsEntity;
+import com.itrailmpool.itrailmpoolviewer.dal.entity.PaymentEntity;
+import com.itrailmpool.itrailmpoolviewer.dal.entity.TransactionDetailsEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.WorkerHashRateEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.WorkerPerformanceStatsEntity;
 import com.itrailmpool.itrailmpoolviewer.dal.entity.WorkerStatisticEntity;
@@ -11,6 +13,8 @@ import com.itrailmpool.itrailmpoolviewer.dal.repository.DeviceStatisticRepositor
 import com.itrailmpool.itrailmpoolviewer.dal.repository.MinerSettingsRepository;
 import com.itrailmpool.itrailmpoolviewer.dal.repository.MinerStatisticRepository;
 import com.itrailmpool.itrailmpoolviewer.dal.repository.PaymentRepository;
+import com.itrailmpool.itrailmpoolviewer.dal.repository.TransactionDetailsRepository;
+import com.itrailmpool.itrailmpoolviewer.dal.repository.TransactionRepository;
 import com.itrailmpool.itrailmpoolviewer.dal.repository.WorkerStatisticRepository;
 import com.itrailmpool.itrailmpoolviewer.exception.MiningPoolViewerException;
 import com.itrailmpool.itrailmpoolviewer.mapper.DeviceStatisticMapper;
@@ -19,6 +23,7 @@ import com.itrailmpool.itrailmpoolviewer.mapper.PaymentMapper;
 import com.itrailmpool.itrailmpoolviewer.mapper.WorkerStatisticMapper;
 import com.itrailmpool.itrailmpoolviewer.model.DeviceStatisticDto;
 import com.itrailmpool.itrailmpoolviewer.model.PaymentDto;
+import com.itrailmpool.itrailmpoolviewer.model.TransactionStatisticDto;
 import com.itrailmpool.itrailmpoolviewer.model.WorkerCurrentStatisticDto;
 import com.itrailmpool.itrailmpoolviewer.model.WorkerDevicesStatisticDto;
 import com.itrailmpool.itrailmpoolviewer.model.WorkerPerformanceStatsContainerDto;
@@ -28,6 +33,7 @@ import jakarta.annotation.PostConstruct;
 import lombok.RequiredArgsConstructor;
 import org.apache.commons.csv.CSVFormat;
 import org.apache.commons.csv.CSVPrinter;
+import org.apache.commons.lang3.StringUtils;
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
 import org.springframework.data.domain.Page;
@@ -36,6 +42,7 @@ import org.springframework.data.domain.Pageable;
 import org.springframework.data.domain.Sort;
 import org.springframework.scheduling.annotation.Scheduled;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 import org.springframework.transaction.support.TransactionTemplate;
 
 import java.io.IOException;
@@ -44,6 +51,7 @@ import java.math.BigDecimal;
 import java.time.Instant;
 import java.time.LocalDate;
 import java.time.temporal.ChronoUnit;
+import java.util.ArrayList;
 import java.util.Collections;
 import java.util.Comparator;
 import java.util.HashMap;
@@ -63,7 +71,8 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
     private static final Logger LOGGER = LoggerFactory.getLogger(WorkerStatisticServiceImpl.class);
     private static final String KEY_SPLITTER = ".";
     private static final Comparator<DeviceStatisticDto> DEFAULT_DEVICE_STATISTIC_COMPARATOR = Comparator.comparing(DeviceStatisticDto::getLastShareDate);
-    private static final String[] WORKER_STATISTIC_CSV_HEADERS = {"workerName", "date", "averageHashRate", "totalAcceptedShares", "totalRejectedShares", "totalPayment"};
+    private static final String[] WORKER_STATISTIC_CSV_HEADERS = {"workerName", "date", "averageHashRate", "totalAcceptedShares", "totalRejectedShares", "paymentWorkers"};
+    private static final String[] TRANSACTION_STATISTIC_CSV_HEADERS = {"address", "transactionHash", "paymentAmount", "date"};
 
     private final MinerSettingsRepository minerSettingsRepository;
     private final DeviceStatisticRepository deviceStatisticRepository;
@@ -76,6 +85,8 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
     private final TransactionTemplate transactionTemplate;
     private final PaymentRepository paymentRepository;
     private final PaymentMapper paymentMapper;
+    private final TransactionRepository transactionRepository;
+    private final TransactionDetailsRepository transactionDetailsRepository;
 
     private volatile Map<String, WorkerStatisticContainerDto> workerStatisticByWorker = new HashMap<>();
 
@@ -242,10 +253,46 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
     public String getWorkerStatisticCsv(String poolId, String workerName, LocalDate startDate, LocalDate endDate) {
         List<WorkerStatisticEntity> workerStatistics = workerStatisticRepository.getWorkerStatisticBetweenDates(poolId, workerName, startDate, endDate);
 
-        return buildCsv(workerStatistics);
+        return buildWorkerStatisticsCsv(workerStatistics);
     }
 
-    private String buildCsv(List<WorkerStatisticEntity> workerStatistics) {
+    @Override
+    @Transactional
+    public String getWorkerTransactionStatisticCsv(String poolId, String workerName, String address) {
+        MinerSettingsEntity miner = minerSettingsRepository.findByPoolIdAndWorkerName(poolId, workerName);
+        if (!miner.getAddress().equals(address)) {
+            LOGGER.error("Not valid address: {}", address);
+
+            return StringUtils.EMPTY;
+        }
+
+        if (!miner.getWorkerName().equals(workerName)) {
+            LOGGER.error("Not valid worker name: {}", workerName);
+
+            return StringUtils.EMPTY;
+        }
+
+        List<PaymentEntity> workerPayments = paymentRepository.findByPoolIdAndWorkerName(poolId, workerName);
+        List<TransactionStatisticDto> transactionStatistics = new ArrayList<>();
+
+        workerPayments.stream()
+                .map(PaymentEntity::getTransactionConfirmationData)
+                .map(transactionRepository::findAllByHash)
+                .forEach(transaction -> {
+                    TransactionDetailsEntity txDetails = transactionDetailsRepository.findByTransactionIdAndAddress(transaction.getId(), address);
+                    TransactionStatisticDto transactionStatistic = new TransactionStatisticDto();
+                    transactionStatistic.setTransactionHash(transaction.getHash());
+                    transactionStatistic.setAddress(address);
+                    transactionStatistic.setDate(transaction.getCreatedDate());
+                    transactionStatistic.setPaymentAmount(txDetails.getAmount());
+
+                    transactionStatistics.add(transactionStatistic);
+                });
+
+        return buildTransactionStatisticCsv(transactionStatistics);
+    }
+
+    private String buildWorkerStatisticsCsv(List<WorkerStatisticEntity> workerStatistics) {
         try (StringWriter writer = new StringWriter()) {
 
             CSVFormat csvFormat = CSVFormat.EXCEL.builder()
@@ -277,8 +324,38 @@ public class WorkerStatisticServiceImpl implements WorkerStatisticService {
         }
     }
 
+    private String buildTransactionStatisticCsv(List<TransactionStatisticDto> transactionStatistics) {
+        try (StringWriter writer = new StringWriter()) {
+
+            CSVFormat csvFormat = CSVFormat.EXCEL.builder()
+                    .setHeader(TRANSACTION_STATISTIC_CSV_HEADERS)
+                    .setDelimiter(";")
+                    .build();
+
+            try (CSVPrinter printer = new CSVPrinter(writer, csvFormat)) {
+                transactionStatistics.forEach(transactionStat -> {
+                    try {
+                        printer.printRecord(
+                                transactionStat.getAddress(),
+                                transactionStat.getTransactionHash(),
+                                transactionStat.getPaymentAmount(),
+                                transactionStat.getDate()
+                        );
+                    } catch (IOException e) {
+                        throw new MiningPoolViewerException(e);
+                    }
+                });
+            }
+
+            return writer.toString();
+        } catch (Exception e) {
+            LOGGER.error("Unable create csv file", e);
+            throw new MiningPoolViewerException(e);
+        }
+    }
+
     @Scheduled(initialDelay = 5, fixedDelay = 5, timeUnit = TimeUnit.MINUTES)
-    private void reload() {
+    protected void reload() {
         try {
             LOGGER.info("WorkerStatistic cache reloading");
 
