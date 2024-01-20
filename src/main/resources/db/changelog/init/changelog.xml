@@ -15,4 +15,13 @@
         <sqlFile encoding="utf8" path="003_devices.sql" relativeToChangelogFile="true" splitStatements="false"/>
     </changeSet>
 
+    <changeSet id="init/004_transactions" author="dmitry_kuksa">
+        <sqlFile encoding="utf8" path="004_transactions.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
+
+    <changeSet id="init/005_transaction_details" author="dmitry_kuksa">
+        <sqlFile encoding="utf8" path="005_transaction_details.sql" relativeToChangelogFile="true" splitStatements="false"/>
+    </changeSet>
+
 </databaseChangeLog>
