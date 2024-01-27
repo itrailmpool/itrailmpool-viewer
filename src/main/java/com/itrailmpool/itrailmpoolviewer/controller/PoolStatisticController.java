@@ -149,7 +149,7 @@ public class PoolStatisticController {
         return workerStatisticService.getDeviceStatistics(pageable, poolId, workerName, deviceName);
     }
 
-    @GetMapping(value = "/{poolId}/workers/{workerName}/statistics/{address}/csv", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
+    @GetMapping(value = "/{poolId}/reports/{workerName}/statistics/{address}/csv", produces = MediaType.APPLICATION_OCTET_STREAM_VALUE)
     public ResponseEntity<byte[]> getTransactionStatisticCsv(@PathVariable String poolId,
                                                         @PathVariable String workerName,
                                                         @PathVariable String address) {
